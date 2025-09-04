@@ -8,6 +8,104 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="style.css" rel="stylesheet">
+    <style>
+        /* Preview Modal Styles */
+        .preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .preview-content {
+            background: white;
+            border-radius: 16px;
+            width: 95vw;
+            height: 90vh;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .preview-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--heading);
+        }
+        .close-btn {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #6b7280;
+        }
+        .close-btn:hover {
+            background: #e5e7eb;
+        }
+        .preview-controls {
+            padding: 16px 24px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .preview-controls label {
+            font-weight: 600;
+            color: var(--heading);
+        }
+        .city-dropdown {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            min-width: 200px;
+            font-size: 0.9rem;
+        }
+        .preview-iframe-container {
+            flex: 1;
+            padding: 12px;
+            background: #f3f4f6;
+        }
+        .preview-iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        @media (max-width: 768px) {
+            .preview-content {
+                width: 98vw;
+                height: 95vh;
+            }
+            .preview-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .city-dropdown {
+                min-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -88,8 +186,29 @@
                     <!-- Actions -->
                     <div class="actions">
                         <button class="btn btn-primary" id="copyHtmlBtn">📋 Copy HTML to Clipboard</button>
+                        <button class="btn btn-secondary" id="previewBtn">👁️ Preview Location Finder</button>
                         <button class="btn btn-secondary" id="downloadHtmlBtn">💾 Download HTML File</button>
                         <button class="btn btn-outline" id="processAnotherBtn">🔄 Process Another File</button>
+                    </div>
+
+                    <!-- Preview Modal -->
+                    <div class="preview-modal" id="previewModal" style="display: none;">
+                        <div class="preview-content">
+                            <div class="preview-header">
+                                <h3>🔍 Test Location Finder</h3>
+                                <button class="close-btn" id="closePreviewBtn">×</button>
+                            </div>
+                            <div class="preview-controls">
+                                <label for="testCity">Test from a city near your locations:</label>
+                                <select id="testCity" class="city-dropdown">
+                                    <option value="">Select a test city...</option>
+                                </select>
+                                <button class="btn btn-primary" id="testLocationBtn">🎯 Test Location</button>
+                            </div>
+                            <div class="preview-iframe-container">
+                                <iframe id="previewFrame" src="about:blank"></iframe>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Copy Feedback -->
@@ -129,9 +248,15 @@
                 this.analysisSection = document.getElementById('analysisSection');
                 this.analysisResults = document.getElementById('analysisResults');
                 this.copyHtmlBtn = document.getElementById('copyHtmlBtn');
+                this.previewBtn = document.getElementById('previewBtn');
                 this.downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
                 this.processAnotherBtn = document.getElementById('processAnotherBtn');
                 this.copyFeedback = document.getElementById('copyFeedback');
+                this.previewModal = document.getElementById('previewModal');
+                this.closePreviewBtn = document.getElementById('closePreviewBtn');
+                this.testCity = document.getElementById('testCity');
+                this.testLocationBtn = document.getElementById('testLocationBtn');
+                this.previewFrame = document.getElementById('previewFrame');
             }
 
             async checkServerStatus() {
@@ -181,8 +306,23 @@
 
                 // Result buttons
                 this.copyHtmlBtn.addEventListener('click', () => this.copyToClipboard());
+                this.previewBtn.addEventListener('click', () => this.openPreview());
                 this.downloadHtmlBtn.addEventListener('click', () => this.downloadHtml());
                 this.processAnotherBtn.addEventListener('click', () => this.resetForm());
+                
+                // Preview modal controls
+                this.closePreviewBtn.addEventListener('click', () => this.closePreview());
+                this.testLocationBtn.addEventListener('click', () => this.testFromCity());
+                this.previewModal.addEventListener('click', (e) => {
+                    if (e.target === this.previewModal) this.closePreview();
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.previewModal.style.display !== 'none') {
+                        this.closePreview();
+                    }
+                });
             }
 
             handleFile(file) {
@@ -301,6 +441,9 @@
                     this.previewList.appendChild(item);
                 });
 
+                // Populate city dropdown for testing
+                this.populateCityDropdown(result.preview);
+                
                 // Show results section, hide upload section
                 this.uploadSection.style.display = 'none';
                 this.resultsSection.style.display = 'block';
@@ -423,6 +566,96 @@
                 
                 // Scroll to top
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            populateCityDropdown(locations) {
+                this.testCity.innerHTML = '<option value="">Select a test city...</option>';
+                
+                // Extract unique cities/countries from locations
+                const testLocations = [
+                    {name: 'New York, NY (USA)', coords: [40.7128, -74.0060]},
+                    {name: 'Los Angeles, CA (USA)', coords: [34.0522, -118.2437]},
+                    {name: 'London, UK', coords: [51.5074, -0.1278]},
+                    {name: 'Manchester, UK', coords: [53.4808, -2.2426]},
+                    {name: 'Sydney, Australia', coords: [-33.8688, 151.2093]},
+                    {name: 'Toronto, Canada', coords: [43.6532, -79.3832]},
+                    {name: 'Paris, France', coords: [48.8566, 2.3522]},
+                    {name: 'Amsterdam, Netherlands', coords: [52.3676, 4.9041]}
+                ];
+                
+                testLocations.forEach(loc => {
+                    const option = document.createElement('option');
+                    option.value = JSON.stringify(loc.coords);
+                    option.textContent = loc.name;
+                    this.testCity.appendChild(option);
+                });
+            }
+
+            openPreview() {
+                if (!this.generatedHtml) {
+                    alert('Please generate HTML first by uploading a CSV file.');
+                    return;
+                }
+                this.previewModal.style.display = 'flex';
+                this.loadPreviewHTML();
+            }
+
+            closePreview() {
+                this.previewModal.style.display = 'none';
+                this.previewFrame.src = 'about:blank';
+            }
+
+            loadPreviewHTML() {
+                // Create a blob with the HTML content
+                const blob = new Blob([this.generatedHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                this.previewFrame.src = url;
+                
+                // Clean up the blob URL after loading
+                this.previewFrame.onload = () => {
+                    URL.revokeObjectURL(url);
+                };
+            }
+
+            testFromCity() {
+                const selectedCoords = this.testCity.value;
+                if (!selectedCoords) {
+                    alert('Please select a city to test from.');
+                    return;
+                }
+
+                try {
+                    const coords = JSON.parse(selectedCoords);
+                    const [lat, lng] = coords;
+                    
+                    // Create modified HTML that overrides the geolocation
+                    let modifiedHtml = this.generatedHtml.replace(
+                        'async function ipGeo(){',
+                        `async function ipGeo(){
+                        // Override for testing from selected city
+                        updateLoadingStep('Using test location...', 40);
+                        return {
+                            lat: ${lat},
+                            lng: ${lng},
+                            city: "Test City",
+                            region: "Test Region", 
+                            country: "test country",
+                            postal: "00000"
+                        };
+                        // Original function below:`
+                    );
+                    
+                    const blob = new Blob([modifiedHtml], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    this.previewFrame.src = url;
+                    
+                    this.previewFrame.onload = () => {
+                        URL.revokeObjectURL(url);
+                    };
+                } catch (error) {
+                    console.error('Error testing location:', error);
+                    alert('Error testing from selected city. Please try again.');
+                }
             }
 
             escapeHtml(text) {
