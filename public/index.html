@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EESystem Location Finder Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>EESystem Location Finder Generator</h1>
+            <p>Upload a CSV file with your business locations to generate a custom EESystem location finder HTML page.</p>
+        </header>
+
+        <main class="main">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <h2>Upload Your CSV File</h2>
+                    
+                    <div class="csv-format">
+                        <h3>Required CSV Format:</h3>
+                        <div class="format-example">
+                            <code>Business Name, Address, Booking URL, Google Maps Link</code>
+                        </div>
+                        <ul class="format-notes">
+                            <li><strong>Business Name</strong> - Required: Name of your EESystem center</li>
+                            <li><strong>Address</strong> - Required: Full address with city, state, country</li>
+                            <li><strong>Booking URL</strong> - Required: Link to your booking page</li>
+                            <li><strong>Google Maps Link</strong> - Optional: Direct Google Maps link</li>
+                        </ul>
+                        <a href="/sample.csv" download class="sample-link">Download Sample CSV</a>
+                    </div>
+
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📄</div>
+                            <div class="upload-text">
+                                <p><strong>Click to upload</strong> or drag and drop your CSV file here</p>
+                                <p class="upload-hint">Maximum file size: 5MB</p>
+                            </div>
+                        </div>
+                        <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                    </div>
+
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p class="progress-text" id="progressText">Processing your CSV file...</p>
+                    </div>
+
+                    <div class="error-message" id="errorMessage" style="display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-card">
+                    <h2>Generated HTML Ready!</h2>
+                    
+                    <div class="results-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="locationCount">0</span>
+                            <span class="stat-label">Locations Processed</span>
+                        </div>
+                    </div>
+
+                    <div class="preview-section">
+                        <h3>Preview (First 5 Locations):</h3>
+                        <div class="preview-list" id="previewList"></div>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn btn-primary" id="copyHtmlBtn">
+                            📋 Copy HTML to Clipboard
+                        </button>
+                        <button class="btn btn-secondary" id="downloadHtmlBtn">
+                            💾 Download HTML File
+                        </button>
+                        <button class="btn btn-outline" id="processAnotherBtn">
+                            🔄 Process Another CSV
+                        </button>
+                    </div>
+
+                    <div class="copy-feedback" id="copyFeedback" style="display: none;">
+                        ✅ HTML copied to clipboard successfully!
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>EESystem Location Finder Generator - Transform your CSV data into interactive location finders</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

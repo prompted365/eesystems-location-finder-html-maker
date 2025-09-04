@@ -1,0 +1,22 @@
+{
+  "name": "ee-location-webapp",
+  "version": "1.0.0",
+  "description": "EESystem Location Finder HTML Generator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "csv-parser": "^3.0.0",
+    "express-rate-limit": "^6.7.0",
+    "validator": "^13.9.0",
+    "openai": "^4.20.1",
+    "axios": "^1.5.0"
+  },
+  "keywords": ["eesystem", "location-finder", "csv", "html-generator"],
+  "author": "EESystem Tools",
+  "license": "ISC"
+}
