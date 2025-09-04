@@ -261,7 +261,7 @@
 
             async checkServerStatus() {
                 try {
-                    const response = await fetch(`http://localhost:${this.port}/api/status`);
+                    const response = await fetch('/api/status');
                     if (response.ok) {
                         const status = await response.json();
                         console.log('Server status:', status);
@@ -349,7 +349,7 @@
                 this.hideError();
 
                 try {
-                    const response = await fetch(`http://localhost:${this.port}/upload`, {
+                    const response = await fetch('/upload', {
                         method: 'POST',
                         body: formData
                     });

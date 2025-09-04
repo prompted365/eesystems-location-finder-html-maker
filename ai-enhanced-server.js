@@ -234,6 +234,13 @@ async function generateHtml(csvData) {
 }
 
 // Routes
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'online', 
+    timestamp: new Date().toISOString(),
+    features: ['AI-enhanced', 'database-comparison', 'preview-system']
+  });
+});
 app.post('/upload', upload.single('csvFile'), async (req, res) => {
   try {
     if (!req.file) {
