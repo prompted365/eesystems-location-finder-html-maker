@@ -33,7 +33,10 @@
       "WebFetch(domain:github.com)",
       "mcp__JustGoingViral__search_repositories",
       "mcp__render__create_web_service",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "mcp__render__get_service",
+      "mcp__render__update_web_service",
+      "mcp__render__list_services"
     ],
     "deny": [],
     "ask": []
