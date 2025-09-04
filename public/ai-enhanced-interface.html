@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Enhanced EESystem Location Webapp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>AI-Enhanced EESystem Location Generator</h1>
+            <p>Upload your CSV with locations and get a fast-loading HTML location finder with hardcoded data</p>
+        </header>
+
+        <main class="main">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <h2>Upload Your CSV File</h2>
+                    
+                    <div class="csv-format">
+                        <h3>Required CSV Format</h3>
+                        <div class="format-example">
+                            <code>name,address,bookingUrl,lat,lng,country,googlemaps</code>
+                        </div>
+                        <ul class="format-notes">
+                            <li>All fields are required except googlemaps</li>
+                            <li>Lat/lng should be decimal degrees (e.g., 33.4554566,-94.06533436)</li>
+                            <li>Country should match the full country name</li>
+                            <li>This system will compare with existing database and show differences</li>
+                        </ul>
+                        <a href="/sample.csv" class="sample-link" download>📄 Download Sample CSV</a>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">
+                                <p>Click to select CSV file or drag and drop</p>
+                                <p class="upload-hint">Maximum file size: 5MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" id="csvFile" accept=".csv" style="display: none;">
+
+                    <!-- Progress -->
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p class="progress-text" id="progressText"></p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div class="error-message" id="errorMessage" style="display: none;"></div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-card">
+                    <h2>✨ Processing Complete!</h2>
+                    
+                    <div class="results-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="locationCount">0</span>
+                            <span class="stat-label">Total Locations</span>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Section -->
+                    <div id="analysisSection" style="display: none;">
+                        <h3>Database Analysis</h3>
+                        <div id="analysisResults"></div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="preview-section">
+                        <h3>Location Preview (First 5)</h3>
+                        <div class="preview-list" id="previewList"></div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="actions">
+                        <button class="btn btn-primary" id="copyHtmlBtn">📋 Copy HTML to Clipboard</button>
+                        <button class="btn btn-secondary" id="downloadHtmlBtn">💾 Download HTML File</button>
+                        <button class="btn btn-outline" id="processAnotherBtn">🔄 Process Another File</button>
+                    </div>
+
+                    <!-- Copy Feedback -->
+                    <div class="copy-feedback" id="copyFeedback" style="display: none;">
+                        ✅ HTML copied to clipboard! You can now paste it anywhere.
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>AI-Enhanced EESystem Location Generator - Fast hardcoded locations with database comparison</p>
+        </footer>
+    </div>
+
+    <script>
+        class AIEnhancedEESystemGenerator {
+            constructor() {
+                this.generatedHtml = '';
+                this.port = 3001; // AI-enhanced server port
+                this.initializeElements();
+                this.bindEvents();
+                this.checkServerStatus();
+            }
+
+            initializeElements() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.csvFile = document.getElementById('csvFile');
+                this.uploadProgress = document.getElementById('uploadProgress');
+                this.progressFill = document.getElementById('progressFill');
+                this.progressText = document.getElementById('progressText');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.uploadSection = document.getElementById('uploadSection');
+                this.resultsSection = document.getElementById('resultsSection');
+                this.locationCount = document.getElementById('locationCount');
+                this.previewList = document.getElementById('previewList');
+                this.analysisSection = document.getElementById('analysisSection');
+                this.analysisResults = document.getElementById('analysisResults');
+                this.copyHtmlBtn = document.getElementById('copyHtmlBtn');
+                this.downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+                this.processAnotherBtn = document.getElementById('processAnotherBtn');
+                this.copyFeedback = document.getElementById('copyFeedback');
+            }
+
+            async checkServerStatus() {
+                try {
+                    const response = await fetch(`http://localhost:${this.port}/api/status`);
+                    if (response.ok) {
+                        const status = await response.json();
+                        console.log('Server status:', status);
+                    }
+                } catch (error) {
+                    console.log('Server status check failed:', error.message);
+                }
+            }
+
+            bindEvents() {
+                // Upload area click
+                this.uploadArea.addEventListener('click', () => {
+                    this.csvFile.click();
+                });
+
+                // File input change
+                this.csvFile.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.handleFile(e.target.files[0]);
+                    }
+                });
+
+                // Drag and drop
+                this.uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    this.uploadArea.classList.add('dragover');
+                });
+
+                this.uploadArea.addEventListener('dragleave', () => {
+                    this.uploadArea.classList.remove('dragover');
+                });
+
+                this.uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.uploadArea.classList.remove('dragover');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.handleFile(files[0]);
+                    }
+                });
+
+                // Result buttons
+                this.copyHtmlBtn.addEventListener('click', () => this.copyToClipboard());
+                this.downloadHtmlBtn.addEventListener('click', () => this.downloadHtml());
+                this.processAnotherBtn.addEventListener('click', () => this.resetForm());
+            }
+
+            handleFile(file) {
+                // Validate file type
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    this.showError('Please select a CSV file');
+                    return;
+                }
+
+                // Validate file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showError('File size must be less than 5MB');
+                    return;
+                }
+
+                this.uploadFile(file);
+            }
+
+            async uploadFile(file) {
+                const formData = new FormData();
+                formData.append('csvFile', file);
+
+                this.showProgress();
+                this.hideError();
+
+                try {
+                    const response = await fetch(`http://localhost:${this.port}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+
+                    this.handleSuccess(result);
+                } catch (error) {
+                    this.showError(error.message);
+                    this.hideProgress();
+                }
+            }
+
+            showProgress() {
+                this.uploadProgress.style.display = 'block';
+                this.progressText.textContent = 'Processing CSV and comparing with database...';
+                
+                // Animate progress bar
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 90) {
+                        clearInterval(interval);
+                    }
+                    this.progressFill.style.width = Math.min(progress, 90) + '%';
+                }, 300);
+                
+                this.progressInterval = interval;
+            }
+
+            hideProgress() {
+                this.uploadProgress.style.display = 'none';
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                }
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+            }
+
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+
+            handleSuccess(result) {
+                // Complete progress bar
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                }
+                this.progressFill.style.width = '100%';
+                this.progressText.textContent = 'AI analysis complete!';
+
+                setTimeout(() => {
+                    this.hideProgress();
+                    this.showResults(result);
+                }, 1000);
+            }
+
+            showResults(result) {
+                // Store generated HTML
+                this.generatedHtml = result.html;
+
+                // Update location count
+                this.locationCount.textContent = result.locationCount;
+
+                // Show analysis if available
+                if (result.analysis) {
+                    this.showAnalysis(result.analysis);
+                }
+
+                // Show preview
+                this.previewList.innerHTML = '';
+                result.preview.forEach(location => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML = `
+                        <div class="preview-name">${this.escapeHtml(location.name)}</div>
+                        <div class="preview-address">${this.escapeHtml(location.address)}</div>
+                        <div class="preview-booking">📅 Booking: ${this.escapeHtml(location.bookingUrl)}</div>
+                        ${location.country ? `<div class="preview-maps">🌍 Country: ${this.escapeHtml(location.country)}</div>` : ''}
+                        ${location.lat && location.lng ? `<div class="preview-maps">📍 Coordinates: ${location.lat}, ${location.lng}</div>` : ''}
+                    `;
+                    this.previewList.appendChild(item);
+                });
+
+                // Show results section, hide upload section
+                this.uploadSection.style.display = 'none';
+                this.resultsSection.style.display = 'block';
+
+                // Scroll to results
+                this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            showAnalysis(analysis) {
+                if (!analysis) return;
+
+                this.analysisSection.style.display = 'block';
+                
+                let html = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                        <div style="text-align: center; padding: 16px; background: #f0f9f4; border-radius: 12px;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #0f5132;">${analysis.new}</div>
+                            <div style="color: #0f5132; font-weight: 600;">New Locations</div>
+                        </div>
+                        <div style="text-align: center; padding: 16px; background: #fef3c7; border-radius: 12px;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #92400e;">${analysis.updated}</div>
+                            <div style="color: #92400e; font-weight: 600;">Updated Locations</div>
+                        </div>
+                        <div style="text-align: center; padding: 16px; background: #e0e7ff; border-radius: 12px;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #3730a3;">${analysis.unchanged}</div>
+                            <div style="color: #3730a3; font-weight: 600;">Unchanged</div>
+                        </div>
+                    </div>
+                `;
+
+                if (analysis.newLocations.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 8px; color: #0f5132;">✨ New Locations Added:</h4>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                ${analysis.newLocations.map(loc => `
+                                    <li style="margin-bottom: 4px;">
+                                        <strong>${this.escapeHtml(loc.name)}</strong> 
+                                        (${this.escapeHtml(loc.country)})
+                                        ${loc.hasCoordinates ? ' 📍' : ' ❌ Missing coordinates'}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (analysis.updatedLocations.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 16px;">
+                            <h4 style="margin: 0 0 8px; color: #92400e;">🔄 Updated Locations:</h4>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                ${analysis.updatedLocations.map(loc => `
+                                    <li style="margin-bottom: 4px;">
+                                        <strong>${this.escapeHtml(loc.name)}</strong>
+                                        ${Object.entries(loc.changes).filter(([,v]) => v).map(([k,]) => 
+                                            k === 'coordinates' ? '📍 Coordinates' : 
+                                            k === 'address' ? '📍 Address' : 
+                                            k === 'bookingUrl' ? '🔗 Booking URL' : k
+                                        ).join(', ')}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                this.analysisResults.innerHTML = html;
+            }
+
+            async copyToClipboard() {
+                try {
+                    await navigator.clipboard.writeText(this.generatedHtml);
+                    this.showCopyFeedback();
+                } catch (error) {
+                    // Fallback for older browsers
+                    const textarea = document.createElement('textarea');
+                    textarea.value = this.generatedHtml;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    this.showCopyFeedback();
+                }
+            }
+
+            showCopyFeedback() {
+                this.copyFeedback.style.display = 'block';
+                setTimeout(() => {
+                    this.copyFeedback.style.display = 'none';
+                }, 3000);
+            }
+
+            downloadHtml() {
+                const blob = new Blob([this.generatedHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'eesystem-location-finder-enhanced.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            resetForm() {
+                // Reset form
+                this.csvFile.value = '';
+                this.generatedHtml = '';
+                
+                // Reset progress
+                this.hideProgress();
+                this.hideError();
+                this.progressFill.style.width = '0%';
+                
+                // Show upload section, hide results
+                this.uploadSection.style.display = 'block';
+                this.resultsSection.style.display = 'none';
+                this.analysisSection.style.display = 'none';
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return String(text || '').replace(/[&<>"']/g, m => map[m]);
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new AIEnhancedEESystemGenerator();
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,15 @@
       "Bash(npm install)",
       "Bash(node:*)",
       "Read(/C:\\Users\\james\\ee-location-webapp\\public/**)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git config:*)",
+      "Read(/C:\\Users\\james\\ee-location-webapp/**)",
+      "Read(/C:\\Users\\james\\Downloads/**)",
+      "Read(/C:\\Users\\james\\Downloads/**)",
+      "Bash(curl:*)",
+      "Read(/C:\\Users\\james\\ee-location-webapp/**)",
+      "Read(/C:\\Users\\james\\ee-location-webapp/**)",
+      "Read(/C:\\Users\\james\\ee-location-webapp/**)"
     ],
     "deny": [],
     "ask": []
