@@ -19,9 +19,16 @@
       "Bash(curl:*)",
       "Read(/C:\\Users\\james\\ee-location-webapp/**)",
       "Read(/C:\\Users\\james\\ee-location-webapp/**)",
-      "Read(/C:\\Users\\james\\ee-location-webapp/**)"
+      "Read(/C:\\Users\\james\\ee-location-webapp/**)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "WebSearch",
+      "Bash(echo $MCP_SERVER_STATUS)",
+      "mcp__JustGoingViral__server_health",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "default"
 }

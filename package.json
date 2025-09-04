@@ -5,18 +5,25 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "claude": "claude"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1",
+    "@anthropic-ai/claude-code": "^1.0.105",
+    "axios": "^1.5.0",
     "csv-parser": "^3.0.0",
+    "express": "^4.18.2",
     "express-rate-limit": "^6.7.0",
-    "validator": "^13.9.0",
+    "multer": "^1.4.5-lts.1",
     "openai": "^4.20.1",
-    "axios": "^1.5.0"
+    "validator": "^13.9.0"
   },
-  "keywords": ["eesystem", "location-finder", "csv", "html-generator"],
+  "keywords": [
+    "eesystem",
+    "location-finder",
+    "csv",
+    "html-generator"
+  ],
   "author": "EESystem Tools",
   "license": "ISC"
 }
