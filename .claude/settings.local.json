@@ -25,7 +25,15 @@
       "WebSearch",
       "Bash(echo $MCP_SERVER_STATUS)",
       "mcp__JustGoingViral__server_health",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(claude mcp:*)",
+      "mcp__render__list_workspaces",
+      "mcp__JustGoingViral__get_file_contents",
+      "WebFetch(domain:github.com)",
+      "mcp__JustGoingViral__search_repositories",
+      "mcp__render__create_web_service",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

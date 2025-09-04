@@ -519,6 +519,45 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
 }
 
 // Routes
+app.post('/upload', upload.single('csvFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    console.log('🚀 Starting FAST processing...');
+    
+    const csvResult = await processCSVFast(req.file.path);
+    const csvData = csvResult.locations;
+    
+    if (csvData.length > 500) {
+      return res.status(400).json({ error: 'Too many locations (max 500 allowed)' });
+    }
+
+    const generatedHtml = generateOptimizedHTML(csvData);
+    
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+    
+    res.json({
+      success: true,
+      locationCount: csvData.length,
+      html: generatedHtml,
+      preview: csvData.slice(0, 5)
+    });
+
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    console.error('CSV processing error:', error.message);
+    res.status(400).json({ 
+      error: error.message || 'Failed to process CSV file' 
+    });
+  }
+});
+
 app.post('/ai-upload', upload.single('csvFile'), async (req, res) => {
   try {
     if (!req.file) {
@@ -611,6 +650,11 @@ app.get('/stats', (req, res) => {
 });
 
 // Preview endpoint
+// Favicon route to prevent 404 errors
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end();
+});
+
 app.get('/preview/:id', (req, res) => {
   const db = loadDatabase();
   const location = db.locations.find(l => l.id === req.params.id);
