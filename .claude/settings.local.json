@@ -36,7 +36,10 @@
       "Bash(taskkill:*)",
       "mcp__render__get_service",
       "mcp__render__update_web_service",
-      "mcp__render__list_services"
+      "mcp__render__list_services",
+      "Bash(git checkout:*)",
+      "Read(//c/Users/james/Downloads/**)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

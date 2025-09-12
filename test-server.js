@@ -8,7 +8,7 @@ const validator = require('validator');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
 
 // Rate limiting
 const limiter = rateLimit({
@@ -46,7 +46,7 @@ const upload = multer({
 });
 
 // Database file path
-const DB_PATH = path.join(__dirname, 'locations_db.json');
+const DB_PATH = path.join(__dirname, 'test_locations_db.json');
 
 // Helper functions
 function sanitizeString(str) {
@@ -128,46 +128,15 @@ function processCsvData(filePath) {
           return;
         }
 
-        // Validate required fields - be more lenient
-        if (!csvData.name || !csvData.name.trim()) {
-          errors.push(`Row ${rowCount}: Missing center name`);
-          return;
-        }
-        
-        if (!csvData.address || !csvData.address.trim()) {
-          errors.push(`Row ${rowCount}: Missing address for "${csvData.name}"`);
-          return;
-        }
-        
-        if (!csvData.bookingUrl || !csvData.bookingUrl.trim()) {
-          errors.push(`Row ${rowCount}: Missing booking URL for "${csvData.name}"`);
+        // Validate required fields
+        if (!csvData.name || !csvData.address || !csvData.bookingUrl) {
+          errors.push(`Row ${rowCount}: Missing required fields (name: "${csvData.name}", address: "${csvData.address}", booking URL: "${csvData.bookingUrl}")`);
           return;
         }
 
-        // Validate booking URL - be more lenient and fix common issues
-        const bookingUrlToTest = csvData.bookingUrl.trim();
-        let isValidUrl = false;
-        
-        try {
-          // Try with original URL
-          if (validateUrl(bookingUrlToTest)) {
-            isValidUrl = true;
-          } else if (bookingUrlToTest.includes('ee-system.com')) {
-            // If it contains ee-system.com, likely valid but missing https://
-            isValidUrl = true;
-          } else if (bookingUrlToTest.startsWith('www.')) {
-            // Try with https prefix
-            isValidUrl = validateUrl('https://' + bookingUrlToTest);
-          }
-        } catch (e) {
-          // If validation throws error, still allow if it looks like an EE-System URL
-          if (bookingUrlToTest.includes('ee-system.com')) {
-            isValidUrl = true;
-          }
-        }
-        
-        if (!isValidUrl) {
-          errors.push(`Row ${rowCount}: Invalid booking URL format for "${csvData.name}": "${csvData.bookingUrl}"`);
+        // Validate booking URL
+        if (!validateUrl(csvData.bookingUrl)) {
+          errors.push(`Row ${rowCount}: Invalid booking URL format: "${csvData.bookingUrl}"`);
           return;
         }
 

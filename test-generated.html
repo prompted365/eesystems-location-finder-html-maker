@@ -185,105 +185,6 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
     return u.toString();
   }
 
-  /* ===== Raw centre list (hardcoded from CSV) ===== */
-  const RAW=__CSV_DATA_PLACEHOLDER__;
-
-  /* ===== Minimal city seeds to bootstrap rough ranking ===== */
-  const CITY_LL={
-    'barnet||united kingdom':[51.646,-0.202],
-    'crawley||united kingdom':[51.109,-0.187],
-    'brighton||united kingdom':[50.822,-0.137],
-    'manchester||united kingdom':[53.478,-2.248],
-    'london||united kingdom':[51.507,-0.128],
-    'texarkana|tx|united states':[33.4555,-94.0653],
-    'phoenix|az|united states':[33.45,-112.07],
-    'markham|on|canada':[43.866,-79.284],
-    'mississauga|on|canada':[43.653,-79.567],
-    'arnemuiden||netherlands':[51.5,3.68],
-    'twello||netherlands':[52.237,6.104]
-  };
-
-  function parseAddress(addr){
-    let city='', st='', country='';
-    const parts=String(addr||'').split(',').map(s=>s.trim());
-    // country from tail
-    if(/United Kingdom|UK/i.test(addr)) country='united kingdom';
-    else if(/USA|United States|PR\b/i.test(addr)) country='united states';
-    else if(/Canada/i.test(addr)) country='canada';
-    else if(/Australia/i.test(addr)) country='australia';
-    else if(/Netherlands/i.test(addr)) country='netherlands';
-    else if(/Ireland/i.test(addr)) country='ireland';
-    else if(/France/i.test(addr)) country='france';
-    else if(/Italy/i.test(addr)) country='italy';
-    else if(/Denmark/i.test(addr)) country='denmark';
-    else if(/Norway/i.test(addr)) country='norway';
-    else if(/Philippines/i.test(addr)) country='philippines';
-    else if(/Slovenia/i.test(addr)) country='slovenia';
-    else if(/Belgium/i.test(addr)) country='belgium';
-    else if(/Greece/i.test(addr)) country='greece';
-    else if(/Mexico/i.test(addr)) country='mexico';
-
-    // state guess
-    const m1=addr.match(/,\s*([A-Z]{2})\s+\d{4,5}/); if(m1) st=m1[1];
-    else { const m2=addr.match(/,\s*([A-Z]{2})(?:,|\s|$)/); if(m2) st=m2[1]; }
-
-    // city guess: take first segment's last word if looks like a place
-    const first=parts[0]||'';
-    const cleaned=first.replace(/\d+|#\d+|Suite|Unit|Rd|Road|St|Street|Ave|Avenue|Blvd|Boulevard|Dr|Drive/gi,'').trim();
-    if(cleaned && !/\d/.test(cleaned)) city=cleaned.split(/\s+/).slice(-1).join(' ')||cleaned;
-
-    if(!country && st) country='united states';
-    const key=(city.toLowerCase()+'|'+(st||'').toLowerCase()+'|'+(country||'')).toLowerCase();
-    const ll=CITY_LL[key]||[null,null];
-    return {city, stateAbbr:st, country, lat:ll[0], lng:ll[1]};
-  }
-
-  const BUSINESSES = RAW.map(r=>({ 
-    ...parseAddress(r.address||''), 
-    name:r.name, 
-    address:r.address, 
-    bookingUrl:ensureHttps(r.bookingUrl),
-    lat: parseFloat(r.lat) || null,
-    lng: parseFloat(r.lng) || null,
-    googlemaps: r.googlemaps || ''
-  }));
-
-  /* ===== Geocoder with cache ===== */
-  const GEO_CACHE_KEY='ees_geo_cache_v3';
-  let GEO_CACHE={}; try{GEO_CACHE=JSON.parse(localStorage.getItem(GEO_CACHE_KEY)||'{}');}catch{GEO_CACHE={};}
-  const saveGeoCache=()=>localStorage.setItem(GEO_CACHE_KEY,JSON.stringify(GEO_CACHE));
-  async function geocodeAddress(addr){
-    if(!addr) return null; if(GEO_CACHE[addr]) return GEO_CACHE[addr];
-    await new Promise(r=>setTimeout(r,160));
-    const url=`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(addr)}`;
-    const res=await fetch(url,{headers:{'Accept-Language':'en'}}).catch(()=>null);
-    if(!res||!res.ok) return null;
-    const arr=await res.json().catch(()=>[]);
-    const hit=arr&&arr[0]; if(!hit) return null;
-    const a=hit.address||{};
-    const out={lat:parseFloat(hit.lat),lng:parseFloat(hit.lon),city:a.city||a.town||a.village||'',region:a.state||a.county||'',country:canonCountry(a.country||'')};
-    GEO_CACHE[addr]=out; saveGeoCache(); return out;
-  }
-
-  /* ===== UI rendering ===== */
-  function makeCards(list){
-    const wrap=document.getElementById('cardsTop'); wrap.innerHTML='';
-    list.forEach((c,i)=>{
-      const card=document.createElement('div'); card.className='card';
-      const h3=document.createElement('h3'); h3.textContent=c.name; card.appendChild(h3);
-      const meta=document.createElement('div'); meta.className='meta';
-      meta.innerHTML=`${c.address||''}${(typeof c._d==='number')?` <span class="badge">${i===0?'Closest — ':''}${fmtMi(c._d)}</span>`:''}`;
-      card.appendChild(meta);
-      const row=document.createElement('div'); row.className='actions';
-      const book=document.createElement('a'); book.href="#"; book.className='btn btn--primary book-btn';
-      book.dataset.url=c.bookingUrl; book.dataset.name=c.name; book.dataset.lat=c.lat||''; book.dataset.lng=c.lng||''; book.textContent='Book Now';
-      const map=document.createElement('a'); map.href=mapsUrl(c.lat,c.lng,c.address,c.googlemaps); map.target="_blank"; map.rel="noopener noreferrer"; map.className='map-link'; map.textContent='See on map';
-      row.appendChild(book); row.appendChild(map); card.appendChild(row);
-      wrap.appendChild(card);
-    });
-    wireBookLinks();
-  }
-
   /* ===== Enhanced IP Geo with multiple fallbacks and debugging ===== */
   async function ipGeo(){
     // Update loading progress
@@ -405,18 +306,105 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
     if(fillEl) fillEl.style.width = progress + '%';
   }
 
+  /* ===== Test mode - showing the UK location issue ===== */
+  console.log('TESTING: Simulating Manchester, UK location');
+  
+  // Force Manchester coordinates for testing
+  const testGeo = {
+    lat: 53.478,
+    lng: -2.248,
+    city: "Manchester",
+    region: "England", 
+    country: "united kingdom",
+    postal: "M1",
+    service: "test-mode"
+  };
+
+  /* ===== Raw centre list (hardcoded from CSV - TRUNCATED FOR DEMO) ===== */
+  const RAW=[
+    // UK Centers (these should show up first for UK users)
+    {
+      "name": "Energy Enhancement Centre LTD",
+      "address": "163 Mays Ln, Barnet EN5 2DY, UK",
+      "bookingUrl": "https://ee-system.com/energy-enhancement-centre-4003",
+      "lat": 51.64588019999999,
+      "lng": -0.20172984999999916,
+      "country": "United Kingdom",
+      "googlemaps": "https://maps.app.goo.gl/WZF9BT5HxszEuzMv9"
+    },
+    {
+      "name": "Crawley Energy Centre",
+      "address": "Bonnets Lane, Crawley, West Sussex, United Kingdom",
+      "bookingUrl": "https://ee-system.com/crawley-energy-centre-1126",
+      "lat": 51.124389,
+      "lng": -0.172741,
+      "country": "United Kingdom",
+      "googlemaps": "N/A"
+    },
+    {
+      "name": "Energy Wave Brighton",
+      "address": "St Augustine's Event Centre, Stanford Ave, Brighton and Hove, Brighton BN1 6EA",
+      "bookingUrl": "https://ee-system.com/energy-wave-brighton-7779",
+      "lat": 50.838243,
+      "lng": -0.140194,
+      "country": "United Kingdom",
+      "googlemaps": "https://maps.app.goo.gl/mkNpiEziqiX9QPPNA"
+    },
+    // Some US centers for comparison
+    {
+      "name": "ArkLaTex EEnergy Healing Center",
+      "address": "4059 Summerhill Rd, Texarkana, TX 75503, USA",
+      "bookingUrl": "https://ee-system.com/arklatex-eenergy-healing-center-2754",
+      "lat": 33.4554566,
+      "lng": -94.06533436,
+      "country": "United States",
+      "googlemaps": "https://www.google.com/maps/place/ArkLaTex+EEnergy+Healing+Center/@33.4560521,-94.066551,17z/data=!3m1!4b1!4m6!3m5!1s0x86346b600dc07e5d:0x39645c27e5116626!8m2!3d33.4560477!4d-94.0639761!16s%2Fg%2F11l2zwwrty?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=2cd94f25-f915-4461-8414-f0f01034cb33"
+    }
+  ];
+
+  const BUSINESSES = RAW.map(r=>({ 
+    ...r,
+    name:r.name, 
+    address:r.address, 
+    bookingUrl:ensureHttps(r.bookingUrl),
+    lat: parseFloat(r.lat) || null,
+    lng: parseFloat(r.lng) || null,
+    googlemaps: r.googlemaps || ''
+  }));
+
+  /* ===== UI rendering ===== */
+  function makeCards(list){
+    const wrap=document.getElementById('cardsTop'); wrap.innerHTML='';
+    list.forEach((c,i)=>{
+      const card=document.createElement('div'); card.className='card';
+      const h3=document.createElement('h3'); h3.textContent=c.name; card.appendChild(h3);
+      const meta=document.createElement('div'); meta.className='meta';
+      meta.innerHTML=`${c.address||''}${(typeof c._d==='number')?` <span class="badge">${i===0?'Closest — ':''}${fmtMi(c._d)}</span>`:''}`;
+      card.appendChild(meta);
+      const row=document.createElement('div'); row.className='actions';
+      const book=document.createElement('a'); book.href="#"; book.className='btn btn--primary book-btn';
+      book.dataset.url=c.bookingUrl; book.dataset.name=c.name; book.dataset.lat=c.lat||''; book.dataset.lng=c.lng||''; book.textContent='Book Now';
+      const map=document.createElement('a'); map.href=mapsUrl(c.lat,c.lng,c.address,c.googlemaps); map.target="_blank"; map.rel="noopener noreferrer"; map.className='map-link'; map.textContent='See on map';
+      row.appendChild(book); row.appendChild(map); card.appendChild(row);
+      wrap.appendChild(card);
+    });
+    wireBookLinks();
+  }
+
   function roughNearest(origin, list){
     return list.filter(b=>Number.isFinite(b.lat)&&Number.isFinite(b.lng))
                .map(b=>({...b,_d: hav(origin,{lat:b.lat,lng:b.lng})}))
                .sort((a,b)=>a._d-b._d);
   }
 
+  // Test the distance calculation with Manchester coordinates
   (async () => {
     const errEl=qs('#errorTop'); const sec=qs('#resultTop'); const title=qs('#titleTop');
     const loadingEl=qs('#loadingTop');
     
     try{
-      const loc = await ipGeo();
+      // Use test geo location (Manchester)
+      const loc = testGeo;
       lastGeo = loc;
 
       updateLoadingStep('Analyzing location data...', 60);
