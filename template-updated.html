@@ -431,18 +431,38 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
         let correctionButton = '';
         let warningMessage = '';
         
-        if (loc.country === 'united kingdom') {
-          // Check if coordinates seem wrong for UK location
-          const distToManchester = haversine({lat: loc.lat, lng: loc.lng}, {lat: 53.4808, lng: -2.2426});
-          const distToLondon = haversine({lat: loc.lat, lng: loc.lng}, {lat: 51.5074, lng: -0.1278});
+        // Global coordinate validation and warnings
+        const countryRanges = {
+          'united kingdom': {lat: [49, 61], lng: [-11, 2], cities: {london: [51.5074, -0.1278], manchester: [53.4808, -2.2426]}},
+          'united states': {lat: [24, 71], lng: [-179, -68], cities: {newyork: [40.7128, -74.0060], losangeles: [34.0522, -118.2437], chicago: [41.8781, -87.6298]}},
+          'canada': {lat: [41, 84], lng: [-141, -52], cities: {toronto: [43.6532, -79.3832], vancouver: [49.2827, -123.1207]}},
+          'australia': {lat: [-44, -10], lng: [113, 154], cities: {sydney: [-33.8688, 151.2093], melbourne: [-37.8136, 144.9631]}},
+          'france': {lat: [41, 51], lng: [-5, 10], cities: {paris: [48.8566, 2.3522]}},
+          'germany': {lat: [47, 55], lng: [5, 16], cities: {berlin: [52.5200, 13.4050]}},
+          'ireland': {lat: [51, 56], lng: [-11, -6], cities: {dublin: [53.3498, -6.2603]}}
+        };
+
+        const countryData = countryRanges[loc.country];
+        if (countryData) {
+          // Check if coordinates are within expected country bounds
+          const latInRange = loc.lat >= countryData.lat[0] && loc.lat <= countryData.lat[1];
+          const lngInRange = loc.lng >= countryData.lng[0] && loc.lng <= countryData.lng[1];
           
-          if (distToManchester > 50 && distToLondon < 50) {
-            warningMessage = `<br><span style="font-size:0.8rem;color:#e53e3e;">⚠️ Detected near London area. If you're in Manchester or northern England, please correct below.</span>`;
+          if (!latInRange || !lngInRange) {
+            warningMessage = `<br><span style="font-size:0.8rem;color:#e53e3e;">⚠️ Detected coordinates seem outside ${loc.country.replace(/\b\w/g,m=>m.toUpperCase())}. Please verify your location below.</span>`;
+          } else if (loc.country === 'united kingdom') {
+            // Specific UK city detection
+            const distToManchester = hav({lat: loc.lat, lng: loc.lng}, {lat: 53.4808, lng: -2.2426});
+            const distToLondon = hav({lat: loc.lat, lng: loc.lng}, {lat: 51.5074, lng: -0.1278});
+            
+            if (distToManchester > 50 && distToLondon < 50) {
+              warningMessage = `<br><span style="font-size:0.8rem;color:#e53e3e;">⚠️ Detected near London area. If you're in Manchester or northern England, please correct below.</span>`;
+            }
           }
           
-          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#e53e3e;color:white;border:1px solid #c53030;border-radius:4px;cursor:pointer;">🔧 Wrong city? Click to correct manually</button>`;
+          correctionButton = `<br><button onclick="correctLocationManually()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#e53e3e;color:white;border:1px solid #c53030;border-radius:4px;cursor:pointer;">🔧 Wrong city? Click to correct manually</button>`;
         } else {
-          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#3182ce;color:white;border:1px solid #2c5aa0;border-radius:4px;cursor:pointer;">🇬🇧 In the UK? Click here</button>`;
+          correctionButton = `<br><button onclick="correctLocationManually()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#3182ce;color:white;border:1px solid #2c5aa0;border-radius:4px;cursor:pointer;">🌍 Wrong location? Click to correct</button>`;
         }
         
         title.innerHTML = `Nearest centres <span style="font-weight:600;color:#50607a;font-size:.95rem">(${where}${serviceInfo})</span>
@@ -548,33 +568,122 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
   window.addEventListener('keydown',e=>{ if(e.key==='Escape' && overlay.style.display==='flex'){ overlay.style.display='none'; clearInterval(countdownTimer); clearTimeout(appearTimer);} });
 
   // Manual location correction function
-  window.correctLocationToUK = function() {
-    const userInput = prompt('Enter your UK city (e.g., Manchester, London, Birmingham):');
+  window.correctLocationManually = function() {
+    const userInput = prompt('Enter your city name or coordinates (e.g., "Manchester", "New York", "Sydney" or "40.7128,-74.0060"):');
     if (userInput) {
-      const city = userInput.trim().toLowerCase();
+      const input = userInput.trim().toLowerCase();
       
-      // Common UK cities with coordinates
-      const ukCities = {
-        'manchester': {lat: 53.4808, lng: -2.2426, city: 'Manchester', region: 'England'},
-        'london': {lat: 51.5074, lng: -0.1278, city: 'London', region: 'England'},
-        'birmingham': {lat: 52.4862, lng: -1.8904, city: 'Birmingham', region: 'England'},
-        'leeds': {lat: 53.8008, lng: -1.5491, city: 'Leeds', region: 'England'},
-        'glasgow': {lat: 55.8642, lng: -4.2518, city: 'Glasgow', region: 'Scotland'},
-        'edinburgh': {lat: 55.9533, lng: -3.1883, city: 'Edinburgh', region: 'Scotland'},
-        'liverpool': {lat: 53.4084, lng: -2.9916, city: 'Liverpool', region: 'England'},
-        'bristol': {lat: 51.4545, lng: -2.5879, city: 'Bristol', region: 'England'},
-        'sheffield': {lat: 53.3811, lng: -1.4701, city: 'Sheffield', region: 'England'},
-        'cardiff': {lat: 51.4816, lng: -3.1791, city: 'Cardiff', region: 'Wales'},
-        'newcastle': {lat: 54.9783, lng: -1.6178, city: 'Newcastle', region: 'England'},
-        'nottingham': {lat: 52.9548, lng: -1.1581, city: 'Nottingham', region: 'England'}
+      // Check if input looks like coordinates (lat,lng)
+      const coordMatch = input.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+      if (coordMatch) {
+        const lat = parseFloat(coordMatch[1]);
+        const lng = parseFloat(coordMatch[2]);
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+          lastGeo = {
+            lat: lat,
+            lng: lng,
+            city: 'Custom Location',
+            region: '',
+            country: 'custom',
+            postal: '',
+            service: 'manual-coordinates'
+          };
+          
+          console.log('Location manually set to coordinates:', lastGeo);
+          
+          // Recalculate distances and update display
+          const cc = canonCountry(lastGeo.country);
+          let same = BUSINESSES.filter(b => canonCountry(b.country) === cc);
+          let ranked = roughNearest({lat:lastGeo.lat,lng:lastGeo.lng}, same);
+          
+          if(ranked.length < 5) {
+            const others = BUSINESSES.filter(b => canonCountry(b.country) !== cc);
+            const rankedOthers = roughNearest({lat:lastGeo.lat,lng:lastGeo.lng}, others);
+            ranked = ranked.concat(rankedOthers.slice(0, 5 - ranked.length));
+          }
+          
+          ranked = ranked.slice(0, 5);
+          
+          // Update the display
+          makeCards(ranked);
+          
+          const title = qs('#titleTop');
+          if (title) {
+            const debugInfo = `${lastGeo.lat.toFixed(3)}, ${lastGeo.lng.toFixed(3)}`;
+            title.innerHTML = `Nearest centres <span style="font-weight:600;color:#50607a;font-size:.95rem">(Custom coordinates)</span>
+              <br><span style="font-size:0.8rem;color:#718096;">Using coordinates: ${debugInfo}</span>`;
+          }
+          return;
+        } else {
+          alert('Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.');
+          return;
+        }
+      }
+      
+      // Global cities database with coordinates
+      const globalCities = {
+        // United Kingdom
+        'manchester': {lat: 53.4808, lng: -2.2426, city: 'Manchester', region: 'England', country: 'united kingdom'},
+        'london': {lat: 51.5074, lng: -0.1278, city: 'London', region: 'England', country: 'united kingdom'},
+        'birmingham': {lat: 52.4862, lng: -1.8904, city: 'Birmingham', region: 'England', country: 'united kingdom'},
+        'leeds': {lat: 53.8008, lng: -1.5491, city: 'Leeds', region: 'England', country: 'united kingdom'},
+        'glasgow': {lat: 55.8642, lng: -4.2518, city: 'Glasgow', region: 'Scotland', country: 'united kingdom'},
+        'edinburgh': {lat: 55.9533, lng: -3.1883, city: 'Edinburgh', region: 'Scotland', country: 'united kingdom'},
+        'liverpool': {lat: 53.4084, lng: -2.9916, city: 'Liverpool', region: 'England', country: 'united kingdom'},
+        'bristol': {lat: 51.4545, lng: -2.5879, city: 'Bristol', region: 'England', country: 'united kingdom'},
+        'sheffield': {lat: 53.3811, lng: -1.4701, city: 'Sheffield', region: 'England', country: 'united kingdom'},
+        'cardiff': {lat: 51.4816, lng: -3.1791, city: 'Cardiff', region: 'Wales', country: 'united kingdom'},
+        'newcastle': {lat: 54.9783, lng: -1.6178, city: 'Newcastle', region: 'England', country: 'united kingdom'},
+        'nottingham': {lat: 52.9548, lng: -1.1581, city: 'Nottingham', region: 'England', country: 'united kingdom'},
+        
+        // United States
+        'new york': {lat: 40.7128, lng: -74.0060, city: 'New York', region: 'NY', country: 'united states'},
+        'los angeles': {lat: 34.0522, lng: -118.2437, city: 'Los Angeles', region: 'CA', country: 'united states'},
+        'chicago': {lat: 41.8781, lng: -87.6298, city: 'Chicago', region: 'IL', country: 'united states'},
+        'houston': {lat: 29.7604, lng: -95.3698, city: 'Houston', region: 'TX', country: 'united states'},
+        'philadelphia': {lat: 39.9526, lng: -75.1652, city: 'Philadelphia', region: 'PA', country: 'united states'},
+        'phoenix': {lat: 33.4484, lng: -112.0740, city: 'Phoenix', region: 'AZ', country: 'united states'},
+        'san antonio': {lat: 29.4241, lng: -98.4936, city: 'San Antonio', region: 'TX', country: 'united states'},
+        'san diego': {lat: 32.7157, lng: -117.1611, city: 'San Diego', region: 'CA', country: 'united states'},
+        'dallas': {lat: 32.7767, lng: -96.7970, city: 'Dallas', region: 'TX', country: 'united states'},
+        'san jose': {lat: 37.3382, lng: -121.8863, city: 'San Jose', region: 'CA', country: 'united states'},
+        'austin': {lat: 30.2672, lng: -97.7431, city: 'Austin', region: 'TX', country: 'united states'},
+        'denver': {lat: 39.7392, lng: -104.9903, city: 'Denver', region: 'CO', country: 'united states'},
+        'seattle': {lat: 47.6062, lng: -122.3321, city: 'Seattle', region: 'WA', country: 'united states'},
+        'miami': {lat: 25.7617, lng: -80.1918, city: 'Miami', region: 'FL', country: 'united states'},
+        'atlanta': {lat: 33.7490, lng: -84.3880, city: 'Atlanta', region: 'GA', country: 'united states'},
+        'las vegas': {lat: 36.1699, lng: -115.1398, city: 'Las Vegas', region: 'NV', country: 'united states'},
+        'boston': {lat: 42.3601, lng: -71.0589, city: 'Boston', region: 'MA', country: 'united states'},
+        
+        // Canada
+        'toronto': {lat: 43.6532, lng: -79.3832, city: 'Toronto', region: 'ON', country: 'canada'},
+        'montreal': {lat: 45.5017, lng: -73.5673, city: 'Montreal', region: 'QC', country: 'canada'},
+        'vancouver': {lat: 49.2827, lng: -123.1207, city: 'Vancouver', region: 'BC', country: 'canada'},
+        'calgary': {lat: 51.0447, lng: -114.0719, city: 'Calgary', region: 'AB', country: 'canada'},
+        'edmonton': {lat: 53.5461, lng: -113.4938, city: 'Edmonton', region: 'AB', country: 'canada'},
+        'ottawa': {lat: 45.4215, lng: -75.6972, city: 'Ottawa', region: 'ON', country: 'canada'},
+        'winnipeg': {lat: 49.8951, lng: -97.1384, city: 'Winnipeg', region: 'MB', country: 'canada'},
+        
+        // Australia
+        'sydney': {lat: -33.8688, lng: 151.2093, city: 'Sydney', region: 'NSW', country: 'australia'},
+        'melbourne': {lat: -37.8136, lng: 144.9631, city: 'Melbourne', region: 'VIC', country: 'australia'},
+        'brisbane': {lat: -27.4698, lng: 153.0251, city: 'Brisbane', region: 'QLD', country: 'australia'},
+        'perth': {lat: -31.9505, lng: 115.8605, city: 'Perth', region: 'WA', country: 'australia'},
+        'adelaide': {lat: -34.9285, lng: 138.6007, city: 'Adelaide', region: 'SA', country: 'australia'},
+        
+        // Other major cities
+        'dublin': {lat: 53.3498, lng: -6.2603, city: 'Dublin', region: 'Leinster', country: 'ireland'},
+        'paris': {lat: 48.8566, lng: 2.3522, city: 'Paris', region: 'Île-de-France', country: 'france'},
+        'amsterdam': {lat: 52.3676, lng: 4.9041, city: 'Amsterdam', region: 'North Holland', country: 'netherlands'},
+        'copenhagen': {lat: 55.6761, lng: 12.5683, city: 'Copenhagen', region: 'Capital Region', country: 'denmark'},
+        'oslo': {lat: 59.9139, lng: 10.7522, city: 'Oslo', region: 'Oslo', country: 'norway'}
       };
       
-      const cityData = ukCities[city];
+      const cityData = globalCities[input];
       if (cityData) {
         // Update the location and recalculate
         lastGeo = {
           ...cityData,
-          country: 'united kingdom',
           postal: '',
           service: 'manual-correction'
         };
@@ -604,7 +713,7 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
             <br><span style="font-size:0.8rem;color:#718096;">Using coordinates: ${debugInfo}</span>`;
         }
       } else {
-        alert('City not recognized. Please try: Manchester, London, Birmingham, Leeds, Glasgow, Edinburgh, Liverpool, Bristol, Sheffield, Cardiff, Newcastle, or Nottingham');
+        alert(`City "${userInput}" not recognized. Try major cities like:\n• UK: Manchester, London, Birmingham, Leeds, Glasgow\n• US: New York, Los Angeles, Chicago, Houston, Miami\n• Canada: Toronto, Montreal, Vancouver, Calgary\n• Australia: Sydney, Melbourne, Brisbane, Perth\n• Other: Dublin, Paris, Amsterdam\n\nOr enter coordinates like "40.7128,-74.0060"`);
       }
     }
   };
