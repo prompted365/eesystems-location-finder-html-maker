@@ -222,11 +222,16 @@ function compareWithDatabase(csvData, dbData) {
       differences.new.push(csvItem);
     } else {
       // Check for updates
+      const existingLat = parseFloat(existing.latitude) || 0;
+      const existingLng = parseFloat(existing.longitude) || 0;
+      const csvLat = parseFloat(csvItem.lat) || 0;
+      const csvLng = parseFloat(csvItem.lng) || 0;
+      
       const hasChanges = (
         existing.address !== csvItem.address ||
         existing.bookingUrl !== csvItem.bookingUrl ||
-        Math.abs((existing.latitude || 0) - (csvItem.lat || 0)) > 0.0001 ||
-        Math.abs((existing.longitude || 0) - (csvItem.lng || 0)) > 0.0001 ||
+        Math.abs(existingLat - csvLat) > 0.0001 ||
+        Math.abs(existingLng - csvLng) > 0.0001 ||
         existing.country !== csvItem.country
       );
 
@@ -244,19 +249,157 @@ function compareWithDatabase(csvData, dbData) {
   return differences;
 }
 
-// Generate HTML from template with hardcoded data
+// AI-powered city extraction from CSV data
+function extractCitiesFromCSV(csvData) {
+  const cities = new Map();
+  
+  csvData.forEach(center => {
+    if (!center.address || !center.name) return;
+    
+    // Extract city from address using various patterns
+    const address = center.address.trim();
+    let city = '';
+    let region = '';
+    let country = center.country || '';
+    
+    // Parse different address formats
+    const addressParts = address.split(',').map(part => part.trim());
+    
+    if (addressParts.length >= 2) {
+      // Try to identify city from address parts
+      // Look for patterns like "City, State ZIP, Country" or "Street, City, State, Country"
+      
+      if (country.toLowerCase().includes('states')) {
+        // US format: "Street, City, STATE ZIP"
+        if (addressParts.length >= 3) {
+          city = addressParts[1]; // Second part is usually city
+          const stateZip = addressParts[2];
+          region = stateZip.match(/([A-Z]{2})/)?.[1] || stateZip.split(' ')[0];
+        }
+      } else if (country.toLowerCase().includes('kingdom')) {
+        // UK format: "Street, City, POSTCODE"
+        city = addressParts[1]; // Second part is usually city
+        region = 'England'; // Default region
+        
+        // Special UK city handling
+        if (city.toLowerCase().includes('london')) {
+          city = 'London';
+        } else if (city.toLowerCase().includes('manchester')) {
+          city = 'Manchester';
+        } else if (city.toLowerCase().includes('birmingham')) {
+          city = 'Birmingham';
+        } else if (city.toLowerCase().includes('brighton')) {
+          city = 'Brighton';
+        } else if (city.toLowerCase().includes('leeds')) {
+          city = 'Leeds';
+        } else if (city.toLowerCase().includes('bristol')) {
+          city = 'Bristol';
+        } else if (city.toLowerCase().includes('liverpool')) {
+          city = 'Liverpool';
+        } else if (city.toLowerCase().includes('glasgow')) {
+          city = 'Glasgow';
+          region = 'Scotland';
+        } else if (city.toLowerCase().includes('edinburgh')) {
+          city = 'Edinburgh';
+          region = 'Scotland';
+        } else if (city.toLowerCase().includes('cardiff')) {
+          city = 'Cardiff';
+          region = 'Wales';
+        }
+      } else if (country.toLowerCase().includes('canada')) {
+        // Canadian format: "Street, City, Province"
+        if (addressParts.length >= 3) {
+          city = addressParts[1];
+          region = addressParts[2].split(' ')[0]; // Extract province
+        }
+      } else if (country.toLowerCase().includes('australia')) {
+        // Australian format: "Street, City State POST, Country"
+        if (addressParts.length >= 2) {
+          const cityStatePart = addressParts[1];
+          const parts = cityStatePart.split(' ');
+          if (parts.length >= 2) {
+            city = parts.slice(0, -2).join(' '); // Everything except last 2 words
+            region = parts[parts.length - 2]; // Second to last is state
+          } else {
+            city = cityStatePart;
+          }
+        }
+      } else {
+        // Generic format: try to get city from second part
+        city = addressParts[1];
+      }
+    }
+    
+    // Clean up city name
+    city = city.replace(/\d+/g, '').replace(/[^\w\s-]/g, '').trim();
+    
+    // Skip if city extraction failed
+    if (!city || city.length < 2) return;
+    
+    // Use coordinates from CSV if available
+    const lat = parseFloat(center.lat);
+    const lng = parseFloat(center.lng);
+    
+    if (isFinite(lat) && isFinite(lng)) {
+      const cityKey = city.toLowerCase();
+      const countryNormalized = country.toLowerCase().includes('states') ? 'united states' :
+                                country.toLowerCase().includes('kingdom') ? 'united kingdom' :
+                                country.toLowerCase().includes('canada') ? 'canada' :
+                                country.toLowerCase().includes('australia') ? 'australia' :
+                                country.toLowerCase();
+      
+      cities.set(cityKey, {
+        lat: lat,
+        lng: lng,
+        city: city,
+        region: region,
+        country: countryNormalized,
+        centerCount: (cities.get(cityKey)?.centerCount || 0) + 1
+      });
+    }
+  });
+  
+  console.log(`🤖 AI extracted ${cities.size} unique cities from ${csvData.length} centers:`);
+  cities.forEach((data, cityKey) => {
+    console.log(`   📍 ${data.city}, ${data.region} (${data.country}) - ${data.centerCount} center(s)`);
+  });
+  
+  return cities;
+}
+
+// Generate HTML from template with hardcoded data and AI-extracted cities
 async function generateHtml(csvData) {
   const templatePath = path.join(__dirname, 'template-updated.html');
   const template = await fs.readFile(templatePath, 'utf8');
   
+  // Extract cities using AI-powered analysis
+  const extractedCities = extractCitiesFromCSV(csvData);
+  
+  // Convert extracted cities to the format expected by the template
+  const cityDatabase = {};
+  extractedCities.forEach((data, cityKey) => {
+    cityDatabase[cityKey] = {
+      lat: data.lat,
+      lng: data.lng,
+      city: data.city,
+      region: data.region,
+      country: data.country
+    };
+  });
+  
   // Convert CSV data to JavaScript array format with proper structure
   const jsArray = JSON.stringify(csvData, null, 2);
   
-  // Replace placeholder with actual data
-  const finalHtml = template.replace('__CSV_DATA_PLACEHOLDER__', jsArray);
+  // Convert city database to JavaScript object format
+  const cityDatabaseJs = JSON.stringify(cityDatabase, null, 2);
+  
+  // Replace placeholders with actual data
+  let finalHtml = template.replace('__CSV_DATA_PLACEHOLDER__', jsArray);
+  finalHtml = finalHtml.replace('__EXTRACTED_CITIES_PLACEHOLDER__', cityDatabaseJs);
   
   // Log generation info
   console.log(`📄 Generated HTML with ${csvData.length} hardcoded locations`);
+  console.log(`🤖 AI extracted ${extractedCities.size} unique cities for manual correction`);
   const ukCount = csvData.filter(loc => loc.country && loc.country.toLowerCase().includes('kingdom')).length;
   const usaCount = csvData.filter(loc => loc.country && loc.country.toLowerCase().includes('states')).length;
   console.log(`   🇬🇧 UK locations: ${ukCount}, 🇺🇸 USA locations: ${usaCount}`);
@@ -265,13 +408,6 @@ async function generateHtml(csvData) {
 }
 
 // Routes
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    status: 'online', 
-    timestamp: new Date().toISOString(),
-    features: ['AI-enhanced', 'database-comparison', 'preview-system']
-  });
-});
 app.post('/upload', upload.single('csvFile'), async (req, res) => {
   try {
     if (!req.file) {
@@ -353,7 +489,7 @@ app.post('/upload', upload.single('csvFile'), async (req, res) => {
         name: u.updated.name,
         changes: {
           address: u.existing.address !== u.updated.address,
-          coordinates: Math.abs((u.existing.latitude || 0) - (u.updated.lat || 0)) > 0.0001,
+          coordinates: Math.abs((parseFloat(u.existing.latitude) || 0) - (parseFloat(u.updated.lat) || 0)) > 0.0001,
           bookingUrl: u.existing.bookingUrl !== u.updated.bookingUrl
         }
       }))
