@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EESystem Center Finder</title>
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#ffffff; --surface:#f5f8fc; --muted:#44506a; --text:#000; --heading:#0a1930;
+  --accentA:#00e5ff; --accentB:#17ff9e; --border:#e8eef6; --error:#b00020;
+  --radius:24px; --shadow:0 14px 36px rgba(14,30,58,.10);
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+.wrapper{max-width:1140px;margin:20px auto;padding:0 14px}
+.locator{padding:22px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+
+/* HERO */
+.hero{margin:10px 0 18px;padding:36px 28px;border-radius:28px;background:#fff;border:1px solid var(--border);text-align:center}
+.hero h2{margin:0 0 12px;font:800 2.25rem/1.18 Poppins,Inter,sans-serif;color:var(--heading)}
+.hero p{margin:0 0 20px;color:#26354f;font-size:1.02rem}
+.small-note{font-size:.66rem;color:#0f5132;margin-top:10px}
+
+/* RESULTS */
+.error{color:var(--error);margin-top:8px;display:none}
+.result{margin-top:14px;padding:22px 18px;border-radius:22px;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow);display:none}
+.result h2{margin:0 0 8px;font:800 1.5rem/1.22 Poppins,Inter,sans-serif;color:var(--heading)}
+.result .sub{margin:0 0 6px;color:#3a4a67;font-size:1rem}
+/* Loading States */
+.loading{padding:32px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:14px;text-align:center}
+.loading-content h3{margin:0 0 8px;font:700 1.4rem/1.3 Poppins,Inter,sans-serif;color:var(--heading)}
+.loading-content p{margin:0 0 24px;color:var(--muted);font-size:1rem}
+.loading-spinner{width:40px;height:40px;border:4px solid #f3f4f6;border-top:4px solid var(--accentA);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.loading-progress{max-width:400px;margin:0 auto}
+.loading-bar{height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden;margin-bottom:12px}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--accentA),var(--accentB));width:0%;transition:width .5s ease;border-radius:999px}
+.loading-steps{color:var(--muted);font-size:.9rem;font-weight:600}
+
+/* Cards - Made Bigger */
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:10px}
+.card{padding:24px;border-radius:20px;background:#fff;border:1px solid var(--border);display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 25px rgba(11,29,60,.08);transition:transform .15s ease,box-shadow .2s ease,border-color .2s ease;min-height:180px}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 35px rgba(11,29,60,.12);border-color:#dfe8f5}
+.card h3{margin:0;font:700 1.2rem/1.3 Poppins,Inter,sans-serif;color:#0f172a}
+.meta{font-size:1rem;color:#53627d;line-height:1.5}
+.meta .badge{display:inline-block;margin-left:8px;padding:6px 12px;border-radius:999px;background:linear-gradient(90deg,rgba(0,229,255,.18),rgba(23,255,158,.18));border:1px solid rgba(0,229,255,.38);font-size:.8rem;color:#00343b;font-weight:800}
+.card .actions{display:flex;align-items:center;gap:14px;margin-top:8px}
+.btn{padding:13px 18px;border-radius:999px;border:1px solid var(--border);font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:#001014;transition:transform .08s ease,filter .18s ease,box-shadow .18s ease}
+.btn--primary{background:linear-gradient(90deg,var(--accentA),var(--accentB));border:0;box-shadow:0 10px 22px rgba(0,192,160,.24)}
+.btn:hover{filter:saturate(1.06) brightness(1.02);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)} .btn[disabled]{opacity:.6;cursor:not-allowed}
+.map-link{font-size:.95rem;color:#0a6f75;text-decoration:underline}
+.map-link:hover{color:#065a5f}
+
+/* Redirect overlay */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(8,14,22,.55);backdrop-filter:saturate(120%) blur(6px);z-index:9999}
+.sheet{max-width:760px;width:92%;background:#fff;border-radius:26px;border:1px solid var(--border);box-shadow:var(--shadow);padding:32px 26px;text-align:center}
+.sheet h3{margin:0 0 12px;font:800 1.6rem/1.28 Poppins,Inter,sans-serif;color:#081225}
+.sheet p{margin:0 0 14px;color:#243148;font-size:1.06rem}
+.progress{height:12px;background:#fff;border:1px solid var(--border);border-radius:999px;overflow:hidden;margin:14px auto 0;max-width:520px}
+.progress .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accentA),var(--accentB));transition:width .25s ease}
+.count{margin-top:10px;color:#0b3b2b;font-weight:800;font-size:1.05rem}
+.sheet .row{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.sheet .go-now{padding:12px 16px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--accentA),var(--accentB));font-weight:800;cursor:pointer}
+
+/* Enhanced Mobile/Browser Compatibility */
+@media (max-width:980px){
+  .cards{grid-template-columns:1fr;gap:16px}
+  .card{padding:20px;min-height:160px}
+  .loading{padding:24px}
+}
+@media (max-width:640px){
+  .hero{padding:24px 16px}
+  .hero h2{font-size:1.75rem}
+  .cards{gap:14px}
+  .card{padding:18px;min-height:140px}
+  .result{padding:16px 12px}
+  .loading{padding:20px}
+  .loading-content h3{font-size:1.2rem}
+  .btn{padding:12px 16px;font-size:.9rem}
+}
+
+/* Cross-browser fixes */
+.card h3,.loading-content h3{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.btn{-webkit-appearance:none;-moz-appearance:none;appearance:none;border:none;outline:none}
+.loading-spinner{-webkit-animation:spin 1s linear infinite;-moz-animation:spin 1s linear infinite}
+@-webkit-keyframes spin{0%{-webkit-transform:rotate(0deg)}100%{-webkit-transform:rotate(360deg)}}
+@-moz-keyframes spin{0%{-moz-transform:rotate(0deg)}100%{-moz-transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="locator" id="ees-widget">
+
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="heroTitle">
+      <h2 id="heroTitle">Let's Find Your Closest EESystem Center</h2>
+      <p>We'll show nearby centres automatically based on your area.</p>
+      <p class="small-note"><strong>Privacy:</strong> we don't save your location. Matching happens in your browser.</p>
+    </section>
+
+    <!-- LOADING STATE -->
+    <div class="loading" id="loadingTop" style="display: block;">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h3>Finding your closest EESystem centers...</h3>
+        <p>We're using your location to find the best matches nearby.</p>
+        <div class="loading-progress">
+          <div class="loading-bar">
+            <div class="loading-fill" id="loadingFill"></div>
+          </div>
+          <div class="loading-steps">
+            <span id="loadingStep">Detecting your location...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUTO-GEO RESULTS -->
+    <div class="error" id="errorTop" role="alert"></div>
+    <section class="result" id="resultTop" aria-live="polite" aria-atomic="true" style="display: none;">
+      <h2 id="titleTop">Nearest centres</h2>
+      <p class="sub">Click <strong>Book Now</strong> to be directed to your EESystem Centre's booking page.</p>
+      <div id="cardsTop" class="cards"></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Redirect overlay -->
+<div class="modal" id="redirectOverlay" aria-live="polite" aria-modal="true" role="dialog">
+  <div class="sheet">
+    <h3 id="redirectTitle">Directing you to the booking page…</h3>
+    <p>Please scroll down on the next page to find the calendar.</p>
+    <p>Heading to <strong id="redirectName">your centre</strong> — where you can learn more and book your first life-changing appointment!</p>
+    <div class="progress"><div class="bar" id="redirBar"></div></div>
+    <div class="count">Opening in <span id="secLeft">10</span> sec</div>
+    <div class="row">
+      <button id="goNowBtn" class="go-now" style="display:none">OK, take me there now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ===== Helpers ===== */
+  const qs=s=>document.querySelector(s);
+  const toRad=v=>v*Math.PI/180;
+  const hav=(a,b)=>{const R=6371,dLat=toRad(b.lat-a.lat),dLon=toRad(b.lng-a.lng);const h=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+  const fmtMi = km => ((km*0.621371)<100?(km*0.621371).toFixed(1):(km*0.621371).toFixed(0))+' mi';
+  const ensureHttps=u=>{if(!u)return '#';u=String(u).trim();if(!/^https?:\/\//i.test(u))u='https://'+u.replace(/^\/+/,'');return u;}
+  const mapsUrl=(lat,lng,address,googlemaps)=> {
+    // Use googlemaps column if available
+    if(googlemaps && googlemaps.trim() && googlemaps.startsWith('http')) {
+      return googlemaps.trim();
+    }
+    // Fallback to lat/lng or address
+    return (Number.isFinite(lat)&&Number.isFinite(lng))
+      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address||'EESystem Center')}`;
+  };
+  const norm=(s)=>String(s||'').trim().toLowerCase();
+  const canonCountry=(c)=>{
+    c=norm(c);
+    if(!c) return '';
+    if(['usa','u.s.a.','united states','united states of america','puerto rico','us'].includes(c)) return 'united states';
+    if(['uk','united kingdom','england','scotland','wales','northern ireland','gb','great britain'].includes(c)) return 'united kingdom';
+    return c;
+  };
+
+  /** Forward UTMs + our geo params to booking URL */
+  const COPY_THROUGH = ['utm_source','utm_medium','utm_campaign','utm_adset','utm_ad','placement','site_source_name','fbclid'];
+  function decorateUrl(url, extra){
+    const u = new URL(ensureHttps(url));
+    const curr = new URL(location.href);
+    COPY_THROUGH.forEach(k => { const v = curr.searchParams.get(k); if(v) u.searchParams.set(k,v); });
+    Object.entries(extra||{}).forEach(([k,v])=>{ if(v!==undefined && v!==null && String(v).length) u.searchParams.set(k,String(v)); });
+    return u.toString();
+  }
+
+  /* ===== Raw centre list (hardcoded from CSV) ===== */
+  const RAW=[
+  {
+    "name": "ArkLaTex EEnergy Healing Center",
+    "address": "4059 Summerhill Rd, Texarkana, TX 75503, USA",
+    "bookingUrl": "https://ee-system.com/arklatex-eenergy-healing-center-2754",
+    "lat": 33.4554566,
+    "lng": -94.06533436,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/ArkLaTex+EEnergy+Healing+Center/@33.4560521,-94.066551,17z/data=!3m1!4b1!4m6!3m5!1s0x86346b600dc07e5d:0x39645c27e5116626!8m2!3d33.4560477!4d-94.0639761!16s%2Fg%2F11l2zwwrty?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=2cd94f25-f915-4461-8414-f0f01034cb33"
+  },
+  {
+    "name": "CenTex EEnergy",
+    "address": "121 Bulverde Crossing #112, Bulverde, TX 78163, USA",
+    "bookingUrl": "https://ee-system.com/centex-eenergy-5300",
+    "lat": 29.795868,
+    "lng": -98.423117,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/CenTex+EEnergy+Healing+Center/@29.7960644,-98.4232629,17z/data=!3m2!4b1!5s0x865c86cb65c5f319:0x775f164c2671eea!4m6!3m5!1s0x865c877edd9d5573:0x491dc523d934fdee!8m2!3d29.7960644!4d-98.4232629!16s%2Fg%2F11l1cbl43d?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Waverider Scalar Wellness Center",
+    "address": "2010 W Parkside Ln, Phoenix, AZ 85027, USA",
+    "bookingUrl": "https://ee-system.com/waverider-scalar-wellness-center-2371",
+    "lat": 33.69645305,
+    "lng": -112.10305779303297,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Waverider+Scalar+Wellness+Center/@33.6961565,-112.1026632,17z/data=!3m1!4b1!4m6!3m5!1s0x872b652a72a41ef7:0xe6fac2bfba34b685!8m2!3d33.6961565!4d-112.1026632!16s%2Fg%2F11vs11kv8c?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Infinite Love",
+    "address": "2205 Cornerstone Blvd, Edinburg, TX 78539, USA",
+    "bookingUrl": "https://ee-system.com/infinite-love-4780",
+    "lat": 26.2646395,
+    "lng": -98.1991253,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Infinite+Love/@26.2646398,-98.2016925,17z/data=!3m1!4b1!4m6!3m5!1s0x8665a1682cf8debd:0x43943318225451c9!8m2!3d26.264635!4d-98.1991176!16s%2Fg%2F1261q2g5h?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=fd0eb4cf-e858-492e-a0a0-47e6f6fe93d2"
+  },
+  {
+    "name": "The Golden Energy Center",
+    "address": "601 5th St, Marble Falls, TX 78654, USA",
+    "bookingUrl": "https://ee-system.com/the-golden-energy-center-schedule-757765",
+    "lat": 30.572308,
+    "lng": -98.272873,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/The+Golden+Energy+Center/@30.5724253,-98.2755189,17z/data=!3m1!4b1!4m6!3m5!1s0x865b1d27e9acd0bb:0x413d549d06faf0a5!8m2!3d30.5724207!4d-98.272944!16s%2Fg%2F11x1typ78_?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=f6573442-f2be-4e73-b333-25215ba26004"
+  },
+  {
+    "name": "Be Well Again",
+    "address": "1150 Estates Dr, Abilene, TX 79602, USA",
+    "bookingUrl": "https://ee-system.com/be-well-again-7299",
+    "lat": 32.4357298,
+    "lng": -99.7050615,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Be+Well+Again/@32.4356263,-99.7047628,17z/data=!3m1!4b1!4m6!3m5!1s0x86568e0e2068902f:0x6341648e29b43dbf!8m2!3d32.4356263!4d-99.7047628!16s%2Fg%2F12ml2yxbm?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Samadhi Healing",
+    "address": "69 Finniss St, Marion SA 5043, Australia",
+    "bookingUrl": "https://ee-system.com/samadhi-healing-679732",
+    "lat": -35.013691,
+    "lng": 138.549968,
+    "country": "Australia",
+    "googlemaps": "https://www.google.com/maps/place/Samadhi+Healing/@-35.0137128,138.5472902,17z/data=!3m1!4b1!4m6!3m5!1s0x6ab0dbcfb523cf03:0xeeb6b0b78e1e77e3!8m2!3d-35.0137172!4d138.5498651!16s%2Fg%2F11y1ld6km7?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=27e073d3-39b9-4a87-969a-692c3cee0194"
+  },
+  {
+    "name": "QHR, Inc. DBA Quantum Healing Room",
+    "address": "615 West Ave, Jenkintown, PA 19046, USA",
+    "bookingUrl": "https://ee-system.com/quantum-healing-room-4511",
+    "lat": 40.09640638101248,
+    "lng": -75.12806094498703,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Quantum+Healing+Room/@40.0963421,-75.1299438,17z/data=!3m1!4b1!4m6!3m5!1s0x89c6b0ea4288f98b:0x6a2d425f08dc465b!8m2!3d40.096338!4d-75.1273689!16s%2Fg%2F11y2r6mx53?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=29439f5d-c7d6-4573-bee4-2b1ef64c1fbf"
+  },
+  {
+    "name": "Catch The Wave Quantum",
+    "address": "16775 Addison Rd. #325 Addison, TX 75001",
+    "bookingUrl": "https://ee-system.com/catch-the-wave-quantum-7606",
+    "lat": 32.9800781,
+    "lng": -96.83126213703704,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Catch+The+Wave+Quantum/@32.9800501,-96.8338692,17z/data=!3m2!4b1!5s0x864c23fddf170547:0xb6920bd45cef4585!4m6!3m5!1s0x864c215ff8187a0d:0xa8f6272bfcc9a266!8m2!3d32.9800456!4d-96.8312943!16s%2Fg%2F11x5jx7cpd?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=5f9357ff-7ab3-48fa-be15-76abe172d410"
+  },
+  {
+    "name": "Innergy.Life",
+    "address": "7620 Cherry Park Dr F, Houston, TX 77095, USA",
+    "bookingUrl": "https://ee-system.com/innergylife",
+    "lat": 29.8899755,
+    "lng": -95.6402308,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Innergy.Life/@29.889875,-95.642414,16z/data=!3m1!4b1!4m6!3m5!1s0x8640d1c82c5a9af1:0x811aa08a1b60fe42!8m2!3d29.8898704!4d-95.6398391!16s%2Fg%2F11kjdxbfb2?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=0724ee21-1cc4-473b-95cb-b6da2526bf71"
+  },
+  {
+    "name": "Willowdale Holistic Center",
+    "address": "100 Ridge Rd, Chadds Ford, PA 19317, USA",
+    "bookingUrl": "https://ee-system.com/willowdale-holistic-center-359035",
+    "lat": 39.8677265,
+    "lng": -75.54517688094757,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Willowdale+Holistic+Center+with+EESystem/@39.8668512,-75.5481199,17z/data=!3m1!4b1!4m6!3m5!1s0x89c6fb1b0d92cb8b:0xb834f4b617b29c29!8m2!3d39.8668471!4d-75.545545!16s%2Fg%2F11kpkmmqm3?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=9251b5be-a2eb-45be-a33f-224ab283883b"
+  },
+  {
+    "name": "Source Energy Initiative",
+    "address": "9144 Burnett Rd SE #201a, Yelm, WA 98597, USA",
+    "bookingUrl": "https://ee-system.com/source-energy-initiative-665189",
+    "lat": 46.954754550000004,
+    "lng": -122.62733107449048,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Source+Energy/@46.9547421,-122.6272905,17z/data=!3m1!4b1!4m6!3m5!1s0x5491124b20715555:0xffa19eb2f8d76722!8m2!3d46.9547421!4d-122.6272905!16s%2Fg%2F11kq_268k9?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Abundant Living Enterprises, Inc. dba:  Revitalize at the Oasis",
+    "address": "62 Regina Dr, Taylor, TX 76574, USA",
+    "bookingUrl": "https://ee-system.com/revitalize-at-the-oasis-7941",
+    "lat": 30.52238576804471,
+    "lng": -97.47743740421419,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Revitalize+At+The+Oasis/@30.5237203,-97.4766856,17z/data=!3m1!4b1!4m6!3m5!1s0x8644dd005f1c4243:0x2b841dae8ccc8eca!8m2!3d30.5237203!4d-97.4766856!16s%2Fg%2F11x77krdg8?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Truenergy healing and wellness llc",
+    "address": "3575 Maple Ave, Zanesville, OH 43701, USA",
+    "bookingUrl": "https://ee-system.com/truenergy-healing-and-wellness-llc-9619",
+    "lat": 39.98762485,
+    "lng": -82.02745096540642,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/Truenergy+Healing+and+Wellness+LLC/@39.9877245,-82.0300061,17z/data=!3m1!4b1!4m6!3m5!1s0x8837ed24f053ef31:0x3eb2f6b58c34949b!8m2!3d39.9877204!4d-82.0274312!16s%2Fg%2F11yc952y12?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=d93af6b4-79b2-46d7-b535-e8482b69c8ed"
+  },
+  {
+    "name": "The Bodega Cat Healing Center",
+    "address": "560 W Main St, Alhambra, CA 91801, USA",
+    "bookingUrl": "https://ee-system.com/TheBodegaCatHealingCenter",
+    "lat": 34.09218440417382,
+    "lng": -118.13295742763655,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/The+Bodega+Cat+Healing+Center/@34.0769192,-118.134678,17z/data=!3m1!4b1!4m6!3m5!1s0x80c2c5003c4aafa3:0xe7d2f011e8b8d5b3!8m2!3d34.0769148!4d-118.1321031!16s%2Fg%2F11xcrkdgtx?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=93b36ffa-07e1-4ff6-a5d5-098786a33c4f"
+  },
+  {
+    "name": "Oregon Energy Healing Center",
+    "address": "223 Wintersage, Talent, OR 97540, USA",
+    "bookingUrl": "https://ee-system.com/oregon-energy-healing-center-336334",
+    "lat": 42.247558,
+    "lng": -122.786506,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Oregon+Energy+Healing+Center/@42.2475512,-122.7889802,17z/data=!3m1!4b1!4m6!3m5!1s0x54cf7313dd17031f:0xb4b4ace8cd83015d!8m2!3d42.2475473!4d-122.7864053!16s%2Fg%2F11krfslhqw?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=fc97befe-d2cd-4674-a7ac-5ba16d172d42"
+  },
+  {
+    "name": "Enfield Healing Centre",
+    "address": "Anneville , Hill of Down ,Clonard ,Enfield ,County Meath ,A83AY19,Republic of Ireland",
+    "bookingUrl": "https://ee-system.com/enfield-healing-centre-658480",
+    "lat": 53.413804,
+    "lng": -6.829946,
+    "country": "Ireland",
+    "googlemaps": "https://www.google.com/maps/place/Enfield+Healing+Centre/@53.4608435,-7.0180225,17z/data=!3m1!4b1!4m6!3m5!1s0x485d8c397c42d023:0x1e7ce3e487f63b2e!8m2!3d53.4608403!4d-7.0154476!16s%2Fg%2F11clszkdfp?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=e514dd3a-5b83-4d95-b46d-acd3f4f7aa30"
+  },
+  {
+    "name": "Vibrational Resonance Collective",
+    "address": "17717 Leisure Lake Dr, Monument, CO 80132, USA",
+    "bookingUrl": "https://ee-system.com/vibrational-resonance-collective-265811",
+    "lat": 39.08855344444444,
+    "lng": -104.87515755555556,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Vibrational+Resonance+Collective+-+EESystem+Colorado/@41.5992913,-112.950195,7z/data=!3m1!4b1!4m6!3m5!1s0x62a7bc4aa1900f8d:0x7eb3b4e61172d0b!8m2!3d41.625375!4d-110.3107331!16s%2Fg%2F11vdgtsdg1?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=bf1ce108-8a07-4a3a-bc05-a0ed0f61e0a4"
+  },
+  {
+    "name": "Frequency of Light",
+    "address": "PO box 531 Margaret River, Western Austalia 6163",
+    "bookingUrl": "https://ee-system.com/frequency-of-light-454296",
+    "lat": 43.569368,
+    "lng": -100.748747,
+    "country": "Austalia",
+    "googlemaps": "https://www.google.com/maps/place/Frequency+of+Light/@-33.9571859,115.0694708,17z/data=!3m1!4b1!4m6!3m5!1s0x2a2fad38c9f6ff2b:0x6c75aa4581db3ddc!8m2!3d-33.9571859!4d115.0694708!16s%2Fg%2F11y3jc463m?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Energy Rejuvenation Wellness Society",
+    "address": "10935 SE 177th Pl. Suite 506-507, Summerfield, FL 34491",
+    "bookingUrl": "https://ee-system.com/energy-rejuvenation-wellness-society-992779",
+    "lat": 29.0085924,
+    "lng": -82.0348092,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Energy+Rejuvenation+Wellness+Center/@28.9654298,-81.9742527,17z/data=!3m1!4b1!4m6!3m5!1s0x88e7c5915a2d9413:0x9f6e63ff2690eaa1!8m2!3d28.9654251!4d-81.9716778!16s%2Fg%2F11vrfntdq7?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=a348c815-fbb6-490d-aed8-07a55c55e91d"
+  },
+  {
+    "name": "EES Austin LLC",
+    "address": "312 W Stassney Ln, Austin, TX 78745, USA",
+    "bookingUrl": "https://ee-system.com/ees-austin-llc",
+    "lat": 30.207099,
+    "lng": -97.77813241019513,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/EES+Austin/@30.2071174,-97.7807343,17z/data=!3m1!4b1!4m6!3m5!1s0x8644b596288cd449:0x14ef20fc13cad2e6!8m2!3d30.2071128!4d-97.7781594!16s%2Fg%2F11t_l9fylh?authuser=0&entry=tts&g_ep=EgoyMDI1MDYyOS4wIPu8ASoASAFQAw%3D%3D&skid=bd54625b-8c9b-4044-8ebe-e63fe0815fa5"
+  },
+  {
+    "name": "New Awake Energy Enhancement Center",
+    "address": "10255 Main St #1, Clarence, NY 14031, USA",
+    "bookingUrl": "https://ee-system.com/new-awake-energy-enhancement-center-428751",
+    "lat": 42.9782757,
+    "lng": -78.6066744,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/New+Awake+Energy+Enhancement+Center/@42.9778934,-78.6066144,17z/data=!3m1!4b1!4m6!3m5!1s0x89d39f7312e6049b:0xdfad0f82a72c5fd2!8m2!3d42.9778934!4d-78.6066144!16s%2Fg%2F11vy8j6dl6?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "DNA Wellness Center",
+    "address": "1101 US-175 #400, Crandall, TX 75114, USA",
+    "bookingUrl": "https://ee-system.com/DNAWellnessCenter",
+    "lat": 32.633652,
+    "lng": -96.455537,
+    "country": "United States",
+    "googlemaps": "https://www.google.com/maps/place/DNA+Wellness+Center/@32.6338232,-96.4548809,17z/data=!3m1!4b1!4m6!3m5!1s0x864eb53431e1ccef:0x107168bfc01ff81e!8m2!3d32.6338232!4d-96.4548809!16s%2Fg%2F11wnh8_ss1?authuser=0&entry=ttu&g_ep=EgoyMDI1MDkwMi4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Healing Hub Playa",
+    "address": "5ta Avenida con calle 42nte Edificio Tanik, Local 104, 77720 Playa del Carmen, Q.R., Mexico",
+    "bookingUrl": "https://ee-system.com/healing-hub-playa-6450",
+    "lat": 18.652013,
+    "lng": -91.782348,
+    "country": "Mexico",
+    "googlemaps": "google.com/maps/place/Healing+Hub+Playa/@20.6366527,-87.0675212,17z/data=!3m1!4b1!4m6!3m5!1s0x8f4e435d7a2dcbeb:0x5380d86333bb9ec5!8m2!3d20.6366477!4d-87.0649463!16s%2Fg%2F11y59mcjzd?authuser=0&entry=tts&g_ep=EgoyMDI1MDgxMS4wIPu8ASoASAFQAw%3D%3D&skid=aa724cbc-3f5f-4281-a495-a607e0a53184"
+  },
+  {
+    "name": "HolisticHealthy Path",
+    "address": "16614 W 159th St, Lockport, IL 60441, USA",
+    "bookingUrl": "https://ee-system.com/HolisticHealthyPath",
+    "lat": 41.59796599644068,
+    "lng": -88.02202715819223,
+    "country": "United States",
+    "googlemaps": "google.com/maps/place/Holistic+Healthy+Path/@41.5995219,-88.0246023,17z/data=!3m1!4b1!4m6!3m5!1s0x880e6a74cb0cad41:0x19be0299d96d177!8m2!3d41.5995179!4d-88.0220274!16s%2Fg%2F1td01210?authuser=0&entry=tts&g_ep=EgoyMDI1MDgxMS4wIPu8ASoASAFQAw%3D%3D&skid=95df174b-1a0c-4786-972b-a827bee48aac"
+  },
+  {
+    "name": "BioRecharge",
+    "address": "21827 Placeritos Blvd, Santa Clarita, CA 91321, USA",
+    "bookingUrl": "https://ee-system.com/biorecharge-9179",
+    "lat": 34.384738,
+    "lng": -118.520212,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/JFnQeqVFLWvdL6fv5"
+  },
+  {
+    "name": "Heaven on Earth Ministry",
+    "address": "250 N. Golden Circle Dr. Ste 107, The Georgetown Building, Santa Ana, CA 92705, USA",
+    "bookingUrl": "https://ee-system.com/heaven-on-earth-ministry-5195",
+    "lat": 33.7468395,
+    "lng": -117.838639873906,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/Ei7bWpu5yCDrjFK27"
+  },
+  {
+    "name": "Pure Vitality",
+    "address": "7 Rue Blaise Pascal, 74600 Annecy, France",
+    "bookingUrl": "https://ee-system.com/pure-vitality-6295",
+    "lat": 45.885984,
+    "lng": 6.103948,
+    "country": "France",
+    "googlemaps": "https://maps.app.goo.gl/hwSPcpdq1rDWGVvV8"
+  },
+  {
+    "name": "Vitality Energy Healing",
+    "address": "1940 E Thunderbird Rd Suite 105, Phoenix, AZ 85022, USA",
+    "bookingUrl": "https://ee-system.com/vitality-energy-healing-2604",
+    "lat": 33.59742715,
+    "lng": -112.03941376954404,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/kPSqDwuAxCTrDp4K6"
+  },
+  {
+    "name": "Regeneration Room Association",
+    "address": "4401 Vineland Rd A4, Orlando, FL 32811, USA",
+    "bookingUrl": "https://ee-system.com/regeneration-room-association-657535",
+    "lat": 28.49917,
+    "lng": -81.43215,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/zzH3L6pSJ3w8PQ129"
+  },
+  {
+    "name": "Forever Me Healing Center",
+    "address": "1206 Millennium Pkwy Suite 2000, Brandon, FL 33511, USA",
+    "bookingUrl": "https://ee-system.com/forevermehealing",
+    "lat": 27.929299085886118,
+    "lng": -82.30183485162485,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/rtkoPbSFpw2x8xnP6"
+  },
+  {
+    "name": "Positive Energy Center LLC",
+    "address": "6080 Pkwy N Dr #100, Cumming, GA 30040, USA",
+    "bookingUrl": "https://ee-system.com/positive-energy-center-1484",
+    "lat": 34.166942,
+    "lng": -84.182443,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/avJYXtrKdJAmrnHc6"
+  },
+  {
+    "name": "Enhanced Energy Wellness",
+    "address": "38975 Sky Canyon Dr suite 208, Murrieta, CA 92563, USA",
+    "bookingUrl": "https://ee-system.com/enhanced-energy-wellness-8153",
+    "lat": 33.555459,
+    "lng": -117.138979,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/f9scgRjYWseYQ6c58"
+  },
+  {
+    "name": "Ethera Thessaloniki",
+    "address": "Thessalonikis - Peraias 18, Thermi 575 00, Greece",
+    "bookingUrl": "https://ee-system.com/ethera-thessaloniki-4887",
+    "lat": 40.43854006015625,
+    "lng": 22.94942395,
+    "country": "Greece",
+    "googlemaps": "https://maps.app.goo.gl/dy3eU5fnbHHmKSnf8"
+  },
+  {
+    "name": "Ethera Athens",
+    "address": "Alkimachou 1, 4th floor, Athina 116 34, Greece",
+    "bookingUrl": "https://ee-system.com/ethera-athens-7121",
+    "lat": 37.96930962777778,
+    "lng": 23.74956078888889,
+    "country": "Greece",
+    "googlemaps": "https://maps.app.goo.gl/9n5PHXJ6AMZZcww3A"
+  },
+  {
+    "name": "Mindbodyreset",
+    "address": "Heiamyrå 19, 4032 Stavanger, Norway",
+    "bookingUrl": "https://ee-system.com/mindbodyreset-9356",
+    "lat": 58.8945822,
+    "lng": 5.7390285,
+    "country": "Norway",
+    "googlemaps": "https://maps.app.goo.gl/HThMvV8C7LvbXP5u9"
+  },
+  {
+    "name": "Infinity wave Center",
+    "address": "2906 S Featherly Way, Boise, ID 83709, USA",
+    "bookingUrl": "https://ee-system.com/infinity-wave-center-1108",
+    "lat": 43.5767187,
+    "lng": -116.2878731,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/syUkJe4qSzmjVFwD7"
+  },
+  {
+    "name": "Energy Enhancement Centre LTD",
+    "address": "163 Mays Ln, Barnet EN5 2DY, UK",
+    "bookingUrl": "https://ee-system.com/energy-enhancement-centre-4003",
+    "lat": 51.64588019999999,
+    "lng": -0.20172984999999916,
+    "country": "United Kingdom",
+    "googlemaps": "https://maps.app.goo.gl/WZF9BT5HxszEuzMv9"
+  },
+  {
+    "name": "Float Valley Inc.",
+    "address": "5261 Hwy 7 #102, Float Valley, Markham, ON L3P 1B8, Canada",
+    "bookingUrl": "https://ee-system.com/float-valley-inc-8989",
+    "lat": 43.8668622,
+    "lng": -79.2837643,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/5tj7EarBznx1RThEA"
+  },
+  {
+    "name": "Las vegas Holistic Center",
+    "address": "5795 S Sandhill Rd A, Las Vegas, NV 89120, United States",
+    "bookingUrl": "https://ee-system.com/LasVegasHolisticCenter",
+    "lat": 36.0842168,
+    "lng": -115.0921194,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/9azhWzqv8KSXSPoo7"
+  },
+  {
+    "name": "QuantumProEnergy",
+    "address": "Corso Francia, 1t, 10098 Rivoli TO, Italy",
+    "bookingUrl": "https://ee-system.com/quantumproenergy-7489",
+    "lat": 45.07047,
+    "lng": 7.52129,
+    "country": "Italy",
+    "googlemaps": "https://maps.app.goo.gl/4DXQnDo27sUtJxfB7"
+  },
+  {
+    "name": "Vital Wellbeing",
+    "address": "Dorpsstraat 24, 7391 DE Twello, Netherlands",
+    "bookingUrl": "https://ee-system.com/vital-wellbeing-6947",
+    "lat": 52.2374629,
+    "lng": 6.1041903,
+    "country": "Netherlands",
+    "googlemaps": "https://maps.app.goo.gl/yYD4ny8LRha9K21p9"
+  },
+  {
+    "name": "Organized Energy MA Inc",
+    "address": "4260 Westbrook Dr #123, Aurora, IL 60504, USA",
+    "bookingUrl": "https://ee-system.com/organized-energy-center-4303",
+    "lat": 41.754487657709305,
+    "lng": -88.20896409266489,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/NmihAuHUwkdxZ6wK7"
+  },
+  {
+    "name": "Quantum Leap Collective",
+    "address": "24708 Florence Acres Rd, Monroe, WA 98272, USA",
+    "bookingUrl": "https://ee-system.com/quantum-leap-collective",
+    "lat": 47.86857105234118,
+    "lng": -121.90006674831228,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/CGv97sbTH92bkRTN8"
+  },
+  {
+    "name": "Pure Wellness",
+    "address": "1071 Waterloo Ln l, Gardnerville, NV 89460, USA",
+    "bookingUrl": "https://ee-system.com/pure-wellness-628544",
+    "lat": 38.9249608,
+    "lng": -119.7641416,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/SvddpwZZ9RqekkWW6"
+  },
+  {
+    "name": "Omni Wellness",
+    "address": "First floor/141 Malop St, Geelong VIC 3220, Australia",
+    "bookingUrl": "https://ee-system.com/omni-wellness-5063",
+    "lat": -38.147938249999996,
+    "lng": 144.36388427922782,
+    "country": "Australia",
+    "googlemaps": "https://maps.app.goo.gl/3dmLzdn1kd6R3mir6"
+  },
+  {
+    "name": "ScalarWave Wellness",
+    "address": "900 Hendersonville Rd #101B, Asheville, NC 28803, USA",
+    "bookingUrl": "https://ee-system.com/ScalarWaveWellness",
+    "lat": 35.5407029,
+    "lng": -82.5316047,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/P2KHFaiBMZ2JCCgq7"
+  },
+  {
+    "name": "Wholeessence Energy Center",
+    "address": "3207 30th Ave, Vernon, BC V1T 2C6, Canada",
+    "bookingUrl": "https://ee-system.com/wholeessence-energy-center-8084",
+    "lat": 50.263939,
+    "lng": -119.274509,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/GiUtGhrq5k67dxWx6"
+  },
+  {
+    "name": "Crawley Energy Centre",
+    "address": "Bonnets Lane, Crawley, West Sussex, United Kingdom",
+    "bookingUrl": "https://ee-system.com/crawley-energy-centre-1126",
+    "lat": 51.124389,
+    "lng": -0.172741,
+    "country": "United Kingdom",
+    "googlemaps": "N/A"
+  },
+  {
+    "name": "Miraculous Energies",
+    "address": "2896 N Williamston Rd, Williamston, MI 48895, USA",
+    "bookingUrl": "https://ee-system.com/MiraculousEnergies",
+    "lat": 42.670114968243894,
+    "lng": -84.28218960743486,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/U1CWLk6rjyBGc1ay8"
+  },
+  {
+    "name": "thrive life center",
+    "address": "111 Corporate Ave. Corner Parkway Place, Filinvest City, Alabang Muntinlupa",
+    "bookingUrl": "https://ee-system.com/thrive-life-center-9810",
+    "lat": 14.415063,
+    "lng": 121.039026,
+    "country": "Philippines",
+    "googlemaps": "https://maps.app.goo.gl/YLNJuzEtcd7KaKD89"
+  },
+  {
+    "name": "Wellness Visions",
+    "address": "5327 Jacuzzi St Suite 1A, Richmond, CA 94804, United States",
+    "bookingUrl": "https://ee-system.com/wellnessvisions",
+    "lat": 37.9004601238921,
+    "lng": -122.31142142220773,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/cEHZmzYGSTKAtABp9"
+  },
+  {
+    "name": "Enlightened Body and Wellness",
+    "address": "7000 Hampton Center Suite E, Morgantown, WV 26505, USA",
+    "bookingUrl": "https://ee-system.com/enlightened-body-and-wellness",
+    "lat": 39.653279,
+    "lng": -79.936763,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/X3u15DpB4sRW3ePTA"
+  },
+  {
+    "name": "Walk In Peace Today",
+    "address": "1692 ROUTE 88 West, Brick, NJ 08724",
+    "bookingUrl": "https://ee-system.com/walk-in-peace-today-5980",
+    "lat": 40.086235,
+    "lng": -74.11085,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/HefxcBUtubT58rEV9"
+  },
+  {
+    "name": "IntelliLight",
+    "address": "368 Peelwood Parade, Halls Head WA 6210, Australia",
+    "bookingUrl": "https://ee-system.com/intelliLight",
+    "lat": -32.56192,
+    "lng": 115.674401,
+    "country": "Australia",
+    "googlemaps": "N/A"
+  },
+  {
+    "name": "Scalar Wellness Center LLC",
+    "address": "2135 Ridge Rd, Rockwall, TX 75087, United States",
+    "bookingUrl": "https://ee-system.com/scalar-wellness-center-9263",
+    "lat": 32.901843369096866,
+    "lng": -96.46626788535345,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/CXueD5iv54zJEJA6A"
+  },
+  {
+    "name": "Energy Wave Brighton",
+    "address": "St Augustine&#x27;s Event Centre, Stanford Ave, Brighton and Hove, Brighton BN1 6EA",
+    "bookingUrl": "https://ee-system.com/energy-wave-brighton-7779",
+    "lat": 50.838243,
+    "lng": -0.140194,
+    "country": "United Kingdom",
+    "googlemaps": "https://maps.app.goo.gl/mkNpiEziqiX9QPPNA"
+  },
+  {
+    "name": "Manifest Wellness Spa",
+    "address": "192B W Campground Rd, Mcdonough, GA, 30253",
+    "bookingUrl": "https://ee-system.com/manifest-wellness-spa-6354",
+    "lat": 33.492595,
+    "lng": -84.1789,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/vcw3CGuJtWBJXUFi7"
+  },
+  {
+    "name": "Unlimited Light Wellness, PMA",
+    "address": "309 SE 1st Ave, Canby, OR 97013",
+    "bookingUrl": "https://ee-system.com/unlimited-light-wellness-1779",
+    "lat": 45.2630999,
+    "lng": -122.68929465,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/7xUiLT3i4Lr8bjhD6"
+  },
+  {
+    "name": "Regenerative Health System",
+    "address": "740 South Rampart Blvd. Las Vegas, Nevada 89145",
+    "bookingUrl": "https://ee-system.com/regenerative-health-system-4429",
+    "lat": 36.1636318,
+    "lng": -115.2892175,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/BMoJ4BxuCLgMqmsF7"
+  },
+  {
+    "name": "Quantum Center Aps",
+    "address": "Friskerbakken 3, 3250 Gilleleje",
+    "bookingUrl": "https://ee-system.com/quantum-center-aps",
+    "lat": 56.1244169,
+    "lng": 12.3124485,
+    "country": "Denmark",
+    "googlemaps": "https://maps.app.goo.gl/Fhg28bBmwVc21E6J6"
+  },
+  {
+    "name": "Elevate-your-wellness",
+    "address": "26415 1A Carmel Rancho Blvd",
+    "bookingUrl": "https://ee-system.com/elevate-your-wellness-5388",
+    "lat": 36.5403834,
+    "lng": -121.9046025,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/8npAdt5vPBiUKESC7"
+  },
+  {
+    "name": "Quantum Energy Wellness Ministry",
+    "address": "4103 Sylvia St SE, Salem, OR. 97317",
+    "bookingUrl": "https://ee-system.com/quantum-energy-wellness-ministry-4821",
+    "lat": 44.907999,
+    "lng": -122.9749696,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/6Piw6tFVo95owpHc6"
+  },
+  {
+    "name": "Heal Yourself Wellness Ministry LLC",
+    "address": "43222 Elwood Ln, Cottage Grove, OR 97424, USA",
+    "bookingUrl": "https://ee-system.com/heal-yourself-wellness-ministry-llc-1258",
+    "lat": 43.77244196456296,
+    "lng": -123.0595212453351,
+    "country": "United States",
+    "googlemaps": "https://mapq.st/467dTEN"
+  },
+  {
+    "name": "Paradigm Healing",
+    "address": "5201 Carlson Park dr.#5 Arcata CA 95519",
+    "bookingUrl": "https://ee-system.com/paradigm-healing-2639",
+    "lat": 40.9051,
+    "lng": -124.07749,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/dArQbeW4ASvNwi4G6"
+  },
+  {
+    "name": "Freedom Health",
+    "address": "3105 Lombard Ave  Everett Wa 98201",
+    "bookingUrl": "https://ee-system.com/freedom-health-1090",
+    "lat": 47.976256,
+    "lng": -122.202694,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/m9qG2GNMYvbmDngj6"
+  },
+  {
+    "name": "Cloud-9 Wellness",
+    "address": "92 Bridge st Dedham, MA 02026",
+    "bookingUrl": "https://ee-system.com/cloud-9-wellness",
+    "lat": 42.26825886748828,
+    "lng": -71.17566299639067,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/bSU9Q4tYGZA54z3Z9"
+  },
+  {
+    "name": "Enhancing Energy Collective",
+    "address": "6026 Lindeman St, Chilliwack, BC V2R 0W1, Canada",
+    "bookingUrl": "https://ee-system.com/enhancing-energy-collective-7669",
+    "lat": 49.112387,
+    "lng": -121.911875,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/bXfN3YtZpq836gxB9"
+  },
+  {
+    "name": "Amplified Healing Lounge",
+    "address": "Sardinera Office Center PR-693 Suite 1 Dorado, PR",
+    "bookingUrl": "https://ee-system.com/amplified-healing-lounge-9615",
+    "lat": 18.4594766,
+    "lng": -66.2618846,
+    "country": "Puerto Rico",
+    "googlemaps": "https://maps.app.goo.gl/58PTeGyfRXo7YJsU6"
+  },
+  {
+    "name": "EES Harmonija telesa in srca d.o.o.",
+    "address": "Šlandrova ulica 8d, 1231 Ljubljana - Črnuče, Slovenia",
+    "bookingUrl": "https://ee-system.com/ees-harmonija-telesa-in-srca-3458",
+    "lat": 46.0980997,
+    "lng": 14.5313801,
+    "country": "Slovenia",
+    "googlemaps": "https://maps.app.goo.gl/Godn2JrdVHyJpWBX6"
+  },
+  {
+    "name": "EE Wellness Within",
+    "address": "18 Wattle Avenue Mildura Vic Australia 3500",
+    "bookingUrl": "https://ee-system.com/ee-wellness-within-4175",
+    "lat": -34.1902874,
+    "lng": 142.1522093,
+    "country": "Australia",
+    "googlemaps": "https://maps.app.goo.gl/FaTRfhDXWNn2csHN8"
+  },
+  {
+    "name": "Cornerstone Wellness Center",
+    "address": "220 Broadway Ave Suite B, St Peter, MN 56082, United States",
+    "bookingUrl": "https://ee-system.com/cornerstone-wellness-center-2556",
+    "lat": 44.325935,
+    "lng": -93.956276,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/WxQGQCHu8URtca569"
+  },
+  {
+    "name": "Organique Wellness Center",
+    "address": "2000 Wisconsin Avenue Unit N1A Racine WI 53403",
+    "bookingUrl": "https://ee-system.com/organique-wellness-center-3244",
+    "lat": 42.70654040179301,
+    "lng": -87.78407426458601,
+    "country": "United States",
+    "googlemaps": "https://mapq.st/4mUXk4A"
+  },
+  {
+    "name": "ReZENergize Sanctuary",
+    "address": "1102 E 80th St. Indianapolis, IN 46240",
+    "bookingUrl": "https://ee-system.com/rezenergize-sanctuary-8799",
+    "lat": 39.90321705,
+    "lng": -86.13925286452098,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/JyssCsAwr8dF9AVB9"
+  },
+  {
+    "name": "IQuantum Wellness Sanctuary",
+    "address": "Suite 11/20/22 Ranelagh Dr, Mount Eliza VIC 3930, Australia",
+    "bookingUrl": "https://ee-system.com/iquantum-wellness-sanctuary-2321",
+    "lat": -38.1838901,
+    "lng": 145.0872772,
+    "country": "Australia",
+    "googlemaps": "https://maps.app.goo.gl/pBQQrJ4jfexaMdSz9"
+  },
+  {
+    "name": "Divinity Wellness",
+    "address": "3465 Rebecca St Unit 103, Oakville, ON L6L 0H3, Canada",
+    "bookingUrl": "https://ee-system.com/divinity-wellness-8495",
+    "lat": 43.38375,
+    "lng": -79.73588,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/8N3zqky5CcYLMpfL8"
+  },
+  {
+    "name": "Energy Enhancement Experience",
+    "address": "190 E Spring Valley Pike, Centerville OH  45458",
+    "bookingUrl": "https://ee-system.com/energy-enhancement-experience",
+    "lat": 39.612147,
+    "lng": -84.157771,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/zgf7v15Et6KUvdwM9"
+  },
+  {
+    "name": "Scalar Wave Therapy, LLC",
+    "address": "2741 South US Highway 35, ,Logansport, IN 46947",
+    "bookingUrl": "https://ee-system.com/scalar-wave-therapy-llc-7102",
+    "lat": 40.7542375,
+    "lng": -86.3625191,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/M2BSU9Vy8NEJsWVP6"
+  },
+  {
+    "name": "Regenesys Wellness Center",
+    "address": "126 G Roden Dr, Boaz, AL 35956, United States",
+    "bookingUrl": "https://ee-system.com/regenesys-wellness-center-301980",
+    "lat": 34.16195687721624,
+    "lng": -86.0685168439179,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/ttr9thQZs1wqmri56"
+  },
+  {
+    "name": "The Energy Room",
+    "address": "200 W Palmetto Park Road, Suite 204",
+    "bookingUrl": "https://ee-system.com/the-energy-room-florida-213859",
+    "lat": 26.35001,
+    "lng": -80.090246,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/5UHd4mQftPa56jMx5"
+  },
+  {
+    "name": "Sydney Energy Healing Hub",
+    "address": "129 Victoria Rd, Gladesville NSW 2111, Australia",
+    "bookingUrl": "https://ee-system.com/sydney-energy-healing-hub-6113",
+    "lat": -33.8359478,
+    "lng": 151.1287842,
+    "country": "Australia",
+    "googlemaps": "https://maps.app.goo.gl/sVerFtryF5LSd5pm8"
+  },
+  {
+    "name": "Quantum Healing Center - Copenhagen",
+    "address": "Ryesgade 27, Baghuset, 1. sal, 2200 Copenhagen N, Denmark",
+    "bookingUrl": "https://ee-system.com/quantum-healing-center-copenhagen-198855",
+    "lat": 55.692174,
+    "lng": 12.566861,
+    "country": "Denmark",
+    "googlemaps": "https://maps.app.goo.gl/ZkbZvUpEa3irz4p48"
+  },
+  {
+    "name": "VIBRANT LIFESTYLE COLLECTIVE BV",
+    "address": "Xavier de Cocklaan 70, 9831 Sint-Martens-Latem, Belgium",
+    "bookingUrl": "https://ee-system.com/vibrant-lifestyle-collective-bv-8244",
+    "lat": 51.0023499,
+    "lng": 3.616483877308644,
+    "country": "Belgium",
+    "googlemaps": "N/A"
+  },
+  {
+    "name": "Revitalife Wellness",
+    "address": "302 - 52224 Range Road 231, Sherwood Park, Alberta, Canada, T8B1N3",
+    "bookingUrl": "https://ee-system.com/revitalife-wellness-6317",
+    "lat": 53.4811449,
+    "lng": -113.2738018,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/q69GiC1kdo5w99s97"
+  },
+  {
+    "name": "The Light Room",
+    "address": "Pasadora Place, 38 Walkers Rd, George Town KY1-1106, Cayman Islands",
+    "bookingUrl": "https://ee-system.com/the-light-room-6459",
+    "lat": 5.407652,
+    "lng": 100.308282,
+    "country": "Malaysia",
+    "googlemaps": "https://maps.app.goo.gl/kQnoh3sAdShxx8Mk7"
+  },
+  {
+    "name": "Quantum Center Odsherred",
+    "address": "Holtevej 18, 4571 Grevinge, Denmark",
+    "bookingUrl": "https://ee-system.com/quantum-center-odsherred-1532",
+    "lat": 55.816374,
+    "lng": 11.608993,
+    "country": "Denmark",
+    "googlemaps": "https://maps.app.goo.gl/2nTjQKFXaC8CR7DX7"
+  },
+  {
+    "name": "Magnolia Quantum Wellness &amp; Medspa",
+    "address": "11 Knob Road Mount Pocono PA 18344",
+    "bookingUrl": "https://ee-system.com/magnolia-wellness-center-5037",
+    "lat": 41.119384,
+    "lng": -75.354088,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/hn3oB3L9SFcmdhFN6"
+  },
+  {
+    "name": "Maui Scalar Room",
+    "address": "810 Kokomo Rd. Suite 102, Haiku, HI 96708",
+    "bookingUrl": "https://ee-system.com/maui-scalar-room",
+    "lat": 20.9142211,
+    "lng": -156.3235866857202,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/feinhmwDJFKxnTD7A"
+  },
+  {
+    "name": "Energie Divine",
+    "address": "460 Saint-Charles West, Longueuil, Quebec, Canada J4H 1G4",
+    "bookingUrl": "https://ee-system.com/energie-divine-4002",
+    "lat": 45.534898,
+    "lng": -73.513879,
+    "country": "Canada",
+    "googlemaps": "https://maps.app.goo.gl/2iWUk6b7KPZueENY6"
+  },
+  {
+    "name": "Energie Spa",
+    "address": "Arne plaat 3a, 4341PE, Arnemuiden",
+    "bookingUrl": "https://ee-system.com/energie-spa",
+    "lat": 51.5000009,
+    "lng": 3.6762457,
+    "country": "Netherlands",
+    "googlemaps": "https://maps.app.goo.gl/H9exjEPs48xA3q9eA"
+  },
+  {
+    "name": "Florida Frequency Farm PMA",
+    "address": "17519 SW 95 Ave, Archer, FL 32618, United States",
+    "bookingUrl": "https://ee-system.com/florida-frequency-farm-6094",
+    "lat": 29.56639054,
+    "lng": -82.52896385,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/ozdwW2LwqbdDM8RM6"
+  },
+  {
+    "name": "Path to Wellness Crenter",
+    "address": "22000 N Pepper Rd.  Suite i Lake Barrington Il, 60010",
+    "bookingUrl": "https://ee-system.com/path-to-wellness-crenter-1106",
+    "lat": 42.18394855,
+    "lng": -88.18547603,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/F7mBts9xfrMBYKVHA"
+  },
+  {
+    "name": "Quantum HEAL",
+    "address": "11723 Old Glenn Hwy, Suite 205 Eagle River, AK 99577",
+    "bookingUrl": "https://ee-system.com/quantum-heal-3354",
+    "lat": 61.32659443,
+    "lng": -149.5701966,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/yuePhP2wPu5gdjNS7"
+  },
+  {
+    "name": "Wellgizer of Greer",
+    "address": "223 Circle Rd Greer SC 29651",
+    "bookingUrl": "https://ee-system.com/wellgizer-of-greer-3062",
+    "lat": 34.83544405,
+    "lng": -82.21180166,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/zHmQ19ieBR6g1VDj6"
+  },
+  {
+    "name": "Divine Alignment",
+    "address": "7935 Airport-Pulling Road, Suite 205 Naples, FL 34109",
+    "bookingUrl": "https://ee-system.com/divine-alignment-8092",
+    "lat": 26.24139908,
+    "lng": -81.769545,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/m6va3fRGzcuZJUax6"
+  },
+  {
+    "name": "Bloom Valley",
+    "address": "Cascina Montecucco, 45, 26845 Codogno LO, Italy",
+    "bookingUrl": "https://ee-system.com/bloom-valley-7108",
+    "lat": 45.18210088,
+    "lng": 9.708759054,
+    "country": "Italy",
+    "googlemaps": "https://maps.app.goo.gl/m7g2N9oQz4RSKKFh8"
+  },
+  {
+    "name": "Energetic Pathways",
+    "address": "200 S 13th Street, Suite 214, Grover Beach, CA 93433",
+    "bookingUrl": "https://ee-system.com/energetic-pathways",
+    "lat": 35.12040053,
+    "lng": -120.615961,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/X6S3MzZ5GxodxMzb7"
+  },
+  {
+    "name": "Abundant Light Center",
+    "address": "3546 E. 51st St",
+    "bookingUrl": "https://ee-system.com/abundant-light-center-7224",
+    "lat": 39.84754759,
+    "lng": -86.10777111,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/AcpaXev2YPnft77H6"
+  },
+  {
+    "name": "Vitality Wellness Energy Room",
+    "address": "162 S Rancho Santa Fe Rd., Encinitas CA 92024",
+    "bookingUrl": "https://ee-system.com/vitality-wellness-energy-room-6328",
+    "lat": 33.03546337,
+    "lng": -117.2378186,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/k2wYw4EZwrQChUux7"
+  },
+  {
+    "name": "ENERGY LOUNGE 369",
+    "address": "11 Duff Place, Booragoon, WA 6154, AUSTRALIA",
+    "bookingUrl": "https://ee-system.com/energy-lounge-369-2159",
+    "lat": -32.04506735,
+    "lng": 115.8377384,
+    "country": "Australia",
+    "googlemaps": "https://maps.app.goo.gl/N6dt38kjvGU5QQ5N6"
+  },
+  {
+    "name": "Quantum Wellness for Life",
+    "address": "418 Range End Road Dillsburg, Pennsylvania 17019",
+    "bookingUrl": "https://ee-system.com/quantum-wellness-for-life-6800",
+    "lat": 40.10207561,
+    "lng": -77.04450294,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/VuhLo8JmrqAUC7fj8"
+  },
+  {
+    "name": "QUANTUM LIGHT HEALING LOUNGE",
+    "address": "Jauna street 12, “Via Jurmala Outlet Village”, Pinki, Babite parish, Marupe municipality, LV 2107, Latvia",
+    "bookingUrl": "https://ee-system.com/quantum-light-healing-lounge-9230",
+    "lat": 56.9561304,
+    "lng": 23.90727655,
+    "country": "Latvia",
+    "googlemaps": "https://maps.app.goo.gl/zn6oimBk5W4MzGkn6"
+  },
+  {
+    "name": "Kims holistic Haven",
+    "address": "7171 S Five Mile Rd, Boise, ID 83709, USA",
+    "bookingUrl": "https://ee-system.com/kims-holistic-haven-6919",
+    "lat": 43.53782672,
+    "lng": -116.3147865,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/Y2gZc9ehFthH7vep7"
+  },
+  {
+    "name": "Prescott Quantum Wellness Center",
+    "address": "930 12th Pl., Prescott, AZ 86305",
+    "bookingUrl": "https://ee-system.com/prescott-quantum-wellness-center-4296",
+    "lat": 34.56523929,
+    "lng": -112.4836339,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/76BqumpkM9K3RQYM7"
+  },
+  {
+    "name": "Faith in Nature Wellness Hub",
+    "address": "1617 Vine St, Denver, CO 80206",
+    "bookingUrl": "https://ee-system.com/faith-in-nature-wellness-hub-2518",
+    "lat": 39.74222842,
+    "lng": -104.9627113,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/cnccAwZowH3iFbRGA"
+  },
+  {
+    "name": "Infinity Life and Light Wellness",
+    "address": "747 Steinebrey Ridge Rd NW, Sugarcreek, OH 44681",
+    "bookingUrl": "https://ee-system.com/infinity-life-and-light-wellness-342038",
+    "lat": 40.49841299,
+    "lng": -81.63161427,
+    "country": "United States",
+    "googlemaps": "https://maps.app.goo.gl/KGEgtCeLUfcd9q2G9"
+  }
+];
+
+  /* ===== Minimal city seeds to bootstrap rough ranking ===== */
+  const CITY_LL={
+    'barnet||united kingdom':[51.646,-0.202],
+    'crawley||united kingdom':[51.109,-0.187],
+    'brighton||united kingdom':[50.822,-0.137],
+    'manchester||united kingdom':[53.478,-2.248],
+    'london||united kingdom':[51.507,-0.128],
+    'texarkana|tx|united states':[33.4555,-94.0653],
+    'phoenix|az|united states':[33.45,-112.07],
+    'markham|on|canada':[43.866,-79.284],
+    'mississauga|on|canada':[43.653,-79.567],
+    'arnemuiden||netherlands':[51.5,3.68],
+    'twello||netherlands':[52.237,6.104]
+  };
+
+  function parseAddress(addr){
+    let city='', st='', country='';
+    const parts=String(addr||'').split(',').map(s=>s.trim());
+    // country from tail
+    if(/United Kingdom|UK/i.test(addr)) country='united kingdom';
+    else if(/USA|United States|PR\b/i.test(addr)) country='united states';
+    else if(/Canada/i.test(addr)) country='canada';
+    else if(/Australia/i.test(addr)) country='australia';
+    else if(/Netherlands/i.test(addr)) country='netherlands';
+    else if(/Ireland/i.test(addr)) country='ireland';
+    else if(/France/i.test(addr)) country='france';
+    else if(/Italy/i.test(addr)) country='italy';
+    else if(/Denmark/i.test(addr)) country='denmark';
+    else if(/Norway/i.test(addr)) country='norway';
+    else if(/Philippines/i.test(addr)) country='philippines';
+    else if(/Slovenia/i.test(addr)) country='slovenia';
+    else if(/Belgium/i.test(addr)) country='belgium';
+    else if(/Greece/i.test(addr)) country='greece';
+    else if(/Mexico/i.test(addr)) country='mexico';
+
+    // state guess
+    const m1=addr.match(/,\s*([A-Z]{2})\s+\d{4,5}/); if(m1) st=m1[1];
+    else { const m2=addr.match(/,\s*([A-Z]{2})(?:,|\s|$)/); if(m2) st=m2[1]; }
+
+    // city guess: take first segment's last word if looks like a place
+    const first=parts[0]||'';
+    const cleaned=first.replace(/\d+|#\d+|Suite|Unit|Rd|Road|St|Street|Ave|Avenue|Blvd|Boulevard|Dr|Drive/gi,'').trim();
+    if(cleaned && !/\d/.test(cleaned)) city=cleaned.split(/\s+/).slice(-1).join(' ')||cleaned;
+
+    if(!country && st) country='united states';
+    const key=(city.toLowerCase()+'|'+(st||'').toLowerCase()+'|'+(country||'')).toLowerCase();
+    const ll=CITY_LL[key]||[null,null];
+    return {city, stateAbbr:st, country, lat:ll[0], lng:ll[1]};
+  }
+
+  const BUSINESSES = RAW.map(r=>({ 
+    ...parseAddress(r.address||''), 
+    name:r.name, 
+    address:r.address, 
+    bookingUrl:ensureHttps(r.bookingUrl),
+    lat: parseFloat(r.lat) || null,
+    lng: parseFloat(r.lng) || null,
+    googlemaps: r.googlemaps || ''
+  }));
+
+  /* ===== Geocoder with cache ===== */
+  const GEO_CACHE_KEY='ees_geo_cache_v3';
+  let GEO_CACHE={}; try{GEO_CACHE=JSON.parse(localStorage.getItem(GEO_CACHE_KEY)||'{}');}catch{GEO_CACHE={};}
+  const saveGeoCache=()=>localStorage.setItem(GEO_CACHE_KEY,JSON.stringify(GEO_CACHE));
+  async function geocodeAddress(addr){
+    if(!addr) return null; if(GEO_CACHE[addr]) return GEO_CACHE[addr];
+    await new Promise(r=>setTimeout(r,160));
+    const url=`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(addr)}`;
+    const res=await fetch(url,{headers:{'Accept-Language':'en'}}).catch(()=>null);
+    if(!res||!res.ok) return null;
+    const arr=await res.json().catch(()=>[]);
+    const hit=arr&&arr[0]; if(!hit) return null;
+    const a=hit.address||{};
+    const out={lat:parseFloat(hit.lat),lng:parseFloat(hit.lon),city:a.city||a.town||a.village||'',region:a.state||a.county||'',country:canonCountry(a.country||'')};
+    GEO_CACHE[addr]=out; saveGeoCache(); return out;
+  }
+
+  /* ===== UI rendering ===== */
+  function makeCards(list){
+    const wrap=document.getElementById('cardsTop'); wrap.innerHTML='';
+    list.forEach((c,i)=>{
+      const card=document.createElement('div'); card.className='card';
+      const h3=document.createElement('h3'); h3.textContent=c.name; card.appendChild(h3);
+      const meta=document.createElement('div'); meta.className='meta';
+      meta.innerHTML=`${c.address||''}${(typeof c._d==='number')?` <span class="badge">${i===0?'Closest — ':''}${fmtMi(c._d)}</span>`:''}`;
+      card.appendChild(meta);
+      const row=document.createElement('div'); row.className='actions';
+      const book=document.createElement('a'); book.href="#"; book.className='btn btn--primary book-btn';
+      book.dataset.url=c.bookingUrl; book.dataset.name=c.name; book.dataset.lat=c.lat||''; book.dataset.lng=c.lng||''; book.textContent='Book Now';
+      const map=document.createElement('a'); map.href=mapsUrl(c.lat,c.lng,c.address,c.googlemaps); map.target="_blank"; map.rel="noopener noreferrer"; map.className='map-link'; map.textContent='See on map';
+      row.appendChild(book); row.appendChild(map); card.appendChild(row);
+      wrap.appendChild(card);
+    });
+    wireBookLinks();
+  }
+
+  /* ===== Enhanced IP Geo with multiple fallbacks and debugging ===== */
+  async function ipGeo(){
+    // Update loading progress
+    updateLoadingStep('Detecting your location...', 20);
+    
+    const geoServices = [
+      {
+        name: 'ipapi.co',
+        url: 'https://ipapi.co/json/',
+        parser: (j) => ({lat:+j.latitude,lng:+j.longitude,city:j.city||"",region:j.region||"",country:canonCountry(j.country_name||""),postal:j.postal||"",service:'ipapi.co'})
+      },
+      {
+        name: 'ipwho.is', 
+        url: 'https://ipwho.is/',
+        parser: (j) => ({lat:+j.latitude,lng:+j.longitude,city:j.city||"",region:j.region||"",country:canonCountry(j.country||""),postal:j.postal||"",service:'ipwho.is'})
+      },
+      {
+        name: 'ip-api.com',
+        url: 'http://ip-api.com/json/',
+        parser: (j) => ({lat:+j.lat,lng:+j.lon,city:j.city||"",region:j.regionName||"",country:canonCountry(j.country||""),postal:j.zip||"",service:'ip-api.com'})
+      }
+    ];
+    
+    // Try each service in order
+    for (let i = 0; i < geoServices.length; i++) {
+      const service = geoServices[i];
+      try {
+        updateLoadingStep(`Trying ${service.name}...`, 20 + (i * 10));
+        const r = await fetch(service.url);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const j = await r.json();
+        
+        const result = service.parser(j);
+        
+        // Validate the result
+        if (isFinite(result.lat) && isFinite(result.lng) && 
+            Math.abs(result.lat) <= 90 && Math.abs(result.lng) <= 180) {
+          
+          updateLoadingStep('Location detected successfully...', 40);
+          
+          // Debug log the detected location
+          console.log(`Location detected by ${service.name}:`, result);
+          
+          // Add debug info to title if coordinates seem wrong for UK
+          if (result.country === 'united kingdom' && (result.lat < 49 || result.lat > 61 || result.lng < -11 || result.lng > 2)) {
+            console.warn('Detected UK but coordinates seem wrong:', result.lat, result.lng);
+          }
+          
+          return result;
+        } else {
+          console.warn(`Invalid coordinates from ${service.name}:`, result.lat, result.lng);
+        }
+      } catch (e) {
+        console.warn(`Failed to get location from ${service.name}:`, e.message);
+        continue;
+      }
+    }
+    
+    // All services failed - try browser geolocation
+    updateLoadingStep('Requesting browser location access...', 35);
+    return await getBrowserLocation();
+  }
+
+  async function getBrowserLocation() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        // Final fallback - try to detect UK vs US based on timezone
+        updateLoadingStep('Using timezone-based location...', 50);
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        if (timezone.includes('London') || timezone.includes('Europe')) {
+          // UK fallback - use London coordinates
+          resolve({lat:51.5074,lng:-0.1278,city:"London",region:"England",country:"united kingdom",postal:"",service:"timezone-fallback"});
+        } else {
+          // US fallback
+          resolve({lat:39.8283,lng:-98.5795,city:"",region:"",country:"united states",postal:"",service:"timezone-fallback"});
+        }
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          updateLoadingStep('Browser location obtained...', 50);
+          const result = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            city: "",
+            region: "",
+            country: "unknown",
+            postal: "",
+            service: "browser-geolocation"
+          };
+          console.log('Browser geolocation result:', result);
+          resolve(result);
+        },
+        (error) => {
+          console.warn('Browser geolocation failed:', error.message);
+          // Fallback based on timezone
+          updateLoadingStep('Using timezone-based location...', 50);
+          const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
+          if (timezone.includes('London') || timezone.includes('Europe')) {
+            // UK fallback - use London coordinates  
+            resolve({lat:51.5074,lng:-0.1278,city:"London",region:"England",country:"united kingdom",postal:"",service:"timezone-fallback"});
+          } else {
+            // US fallback
+            resolve({lat:39.8283,lng:-98.5795,city:"",region:"",country:"united states",postal:"",service:"timezone-fallback"});
+          }
+        },
+        {timeout: 10000, enableHighAccuracy: false}
+      );
+    });
+  }
+
+  function updateLoadingStep(text, progress) {
+    const stepEl = document.getElementById('loadingStep');
+    const fillEl = document.getElementById('loadingFill');
+    if(stepEl) stepEl.textContent = text;
+    if(fillEl) fillEl.style.width = progress + '%';
+  }
+
+  function roughNearest(origin, list){
+    return list.filter(b=>Number.isFinite(b.lat)&&Number.isFinite(b.lng))
+               .map(b=>({...b,_d: hav(origin,{lat:b.lat,lng:b.lng})}))
+               .sort((a,b)=>a._d-b._d);
+  }
+
+  (async () => {
+    const errEl=qs('#errorTop'); const sec=qs('#resultTop'); const title=qs('#titleTop');
+    const loadingEl=qs('#loadingTop');
+    
+    try{
+      const loc = await ipGeo();
+      lastGeo = loc;
+
+      updateLoadingStep('Analyzing location data...', 60);
+
+      // Show where it searched with debug info
+      if (title) {
+        const where = [loc.city, loc.region].filter(Boolean).join(', ') || (loc.country ? loc.country.replace(/\b\w/g,m=>m.toUpperCase()) : 'your area');
+        const debugInfo = `${loc.lat.toFixed(3)}, ${loc.lng.toFixed(3)}`;
+        const serviceInfo = loc.service ? ` via ${loc.service}` : '';
+        
+        // Add manual correction option and warnings
+        let correctionButton = '';
+        let warningMessage = '';
+        
+        if (loc.country === 'united kingdom') {
+          // Check if coordinates seem wrong for UK location
+          const distToManchester = haversine({lat: loc.lat, lng: loc.lng}, {lat: 53.4808, lng: -2.2426});
+          const distToLondon = haversine({lat: loc.lat, lng: loc.lng}, {lat: 51.5074, lng: -0.1278});
+          
+          if (distToManchester > 50 && distToLondon < 50) {
+            warningMessage = `<br><span style="font-size:0.8rem;color:#e53e3e;">⚠️ Detected near London area. If you're in Manchester or northern England, please correct below.</span>`;
+          }
+          
+          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#e53e3e;color:white;border:1px solid #c53030;border-radius:4px;cursor:pointer;">🔧 Wrong city? Click to correct manually</button>`;
+        } else {
+          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#3182ce;color:white;border:1px solid #2c5aa0;border-radius:4px;cursor:pointer;">🇬🇧 In the UK? Click here</button>`;
+        }
+        
+        title.innerHTML = `Nearest centres <span style="font-weight:600;color:#50607a;font-size:.95rem">(${where}${serviceInfo})</span>
+          <br><span style="font-size:0.8rem;color:#718096;">Detected coordinates: ${debugInfo}</span>${warningMessage}${correctionButton}`;
+      }
+
+      updateLoadingStep('Finding nearby centers...', 80);
+
+      // Same-country first, then closest globally if needed
+      const cc = canonCountry(loc.country);
+      let same = BUSINESSES.filter(b => canonCountry(b.country) === cc);
+      
+      // Use exact coordinates from CSV, compute distance
+      let ranked = roughNearest({lat:loc.lat,lng:loc.lng}, same);
+      
+      // If fewer than 5 same-country locations, add closest from other countries
+      if(ranked.length < 5) {
+        const others = BUSINESSES.filter(b => canonCountry(b.country) !== cc);
+        const rankedOthers = roughNearest({lat:loc.lat,lng:loc.lng}, others);
+        ranked = ranked.concat(rankedOthers.slice(0, 5 - ranked.length));
+      }
+      
+      // Take final top 5
+      ranked = ranked.slice(0, 5);
+
+      updateLoadingStep('Preparing results...', 95);
+
+      if(!ranked.length){
+        loadingEl.style.display='none';
+        sec.style.display='none';
+        errEl.textContent='No locations found. This might be due to an ad blocker or network issue. Please try disabling ad blockers or check your internet connection.';
+        errEl.style.display='block';
+        return;
+      }
+
+      updateLoadingStep('Complete!', 100);
+      
+      // Small delay to show completion
+      setTimeout(() => {
+        makeCards(ranked);
+        loadingEl.style.display='none';
+        sec.style.display='block';
+      }, 300);
+      
+    }catch(e){
+      console.error(e);
+      loadingEl.style.display='none';
+      sec.style.display='none';
+      errEl.textContent='Unable to detect location. This might be due to ad blockers or network restrictions. Please try disabling ad blockers and refresh the page.';
+      errEl.style.display='block';
+    }
+  })();
+
+  /* ===== Book flow (overlay + forwarding params) ===== */
+  let lastGeo=null;
+  const overlay=qs('#redirectOverlay'), bar=qs('#redirBar'), rname=qs('#redirectName'), secLeftEl=qs('#secLeft'), goNowBtn=qs('#goNowBtn');
+  let countdownTimer=null, targetUrl='#', appearTimer=null;
+
+  function wireBookLinks(){
+    document.querySelectorAll('a.book-btn').forEach(a=>{
+      a.removeEventListener('click', onBook, true);
+      a.addEventListener('click', onBook, true);
+    });
+  }
+
+  function onBook(e){
+    e.preventDefault(); e.stopPropagation(); if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    const baseUrl = e.currentTarget.dataset.url;
+    const name = e.currentTarget.dataset.name || 'your centre';
+    const cLat = parseFloat(e.currentTarget.dataset.lat);
+    const cLng = parseFloat(e.currentTarget.dataset.lng);
+
+    let distMi = '';
+    if(lastGeo && Number.isFinite(cLat) && Number.isFinite(cLng)){
+      const dKm = hav({lat:lastGeo.lat,lng:lastGeo.lng}, {lat:cLat,lng:cLng});
+      distMi = (dKm*0.621371).toFixed(2);
+    }
+
+    const params = {
+      utm_client_city: lastGeo?.city || '',
+      utm_client_region: lastGeo?.region || '',
+      utm_client_country: lastGeo?.country || '',
+      utm_client_postal: lastGeo?.postal || '',
+      utm_client_lat: Number.isFinite(lastGeo?.lat) ? Number(lastGeo.lat).toFixed(6) : '',
+      utm_client_lng: Number.isFinite(lastGeo?.lng) ? Number(lastGeo.lng).toFixed(6) : '',
+      utm_nearest_center: name,
+      utm_nearest_center_distance_mi: distMi,
+      utm_geo_match_within_10mi: distMi ? (parseFloat(distMi) <= 10 ? 'true' : 'false') : ''
+    };
+
+    const finalUrl = decorateUrl(baseUrl, params);
+    if(!finalUrl) return;
+
+    targetUrl = finalUrl;
+    rname.textContent=name; overlay.style.display='flex'; bar.style.width='0%'; secLeftEl.textContent='10';
+    goNowBtn.style.display='none'; goNowBtn.disabled=true;
+    appearTimer=setTimeout(()=>{ goNowBtn.style.display='inline-block'; goNowBtn.disabled=false; goNowBtn.focus(); },2000);
+    const total=10_000, step=100; let elapsed=0;
+    countdownTimer=setInterval(()=>{ elapsed+=step; bar.style.width=Math.min(100,(elapsed/total)*100)+'%'; secLeftEl.textContent=String(Math.max(0,Math.ceil((total-elapsed)/1000))); if(elapsed>=total){ clearInterval(countdownTimer); proceed(); } },step);
+  }
+  function proceed(){ window.location.href=targetUrl; }
+  goNowBtn.addEventListener('click', proceed);
+  window.addEventListener('keydown',e=>{ if(e.key==='Escape' && overlay.style.display==='flex'){ overlay.style.display='none'; clearInterval(countdownTimer); clearTimeout(appearTimer);} });
+
+  // Manual location correction function
+  window.correctLocationToUK = function() {
+    const userInput = prompt('Enter your UK city (e.g., Manchester, London, Birmingham):');
+    if (userInput) {
+      const city = userInput.trim().toLowerCase();
+      
+      // Common UK cities with coordinates
+      const ukCities = {
+        'manchester': {lat: 53.4808, lng: -2.2426, city: 'Manchester', region: 'England'},
+        'london': {lat: 51.5074, lng: -0.1278, city: 'London', region: 'England'},
+        'birmingham': {lat: 52.4862, lng: -1.8904, city: 'Birmingham', region: 'England'},
+        'leeds': {lat: 53.8008, lng: -1.5491, city: 'Leeds', region: 'England'},
+        'glasgow': {lat: 55.8642, lng: -4.2518, city: 'Glasgow', region: 'Scotland'},
+        'edinburgh': {lat: 55.9533, lng: -3.1883, city: 'Edinburgh', region: 'Scotland'},
+        'liverpool': {lat: 53.4084, lng: -2.9916, city: 'Liverpool', region: 'England'},
+        'bristol': {lat: 51.4545, lng: -2.5879, city: 'Bristol', region: 'England'},
+        'sheffield': {lat: 53.3811, lng: -1.4701, city: 'Sheffield', region: 'England'},
+        'cardiff': {lat: 51.4816, lng: -3.1791, city: 'Cardiff', region: 'Wales'},
+        'newcastle': {lat: 54.9783, lng: -1.6178, city: 'Newcastle', region: 'England'},
+        'nottingham': {lat: 52.9548, lng: -1.1581, city: 'Nottingham', region: 'England'}
+      };
+      
+      const cityData = ukCities[city];
+      if (cityData) {
+        // Update the location and recalculate
+        lastGeo = {
+          ...cityData,
+          country: 'united kingdom',
+          postal: '',
+          service: 'manual-correction'
+        };
+        
+        console.log('Location manually corrected to:', lastGeo);
+        
+        // Recalculate distances and update display
+        const cc = canonCountry(lastGeo.country);
+        let same = BUSINESSES.filter(b => canonCountry(b.country) === cc);
+        let ranked = roughNearest({lat:lastGeo.lat,lng:lastGeo.lng}, same);
+        
+        if(ranked.length < 5) {
+          const others = BUSINESSES.filter(b => canonCountry(b.country) !== cc);
+          const rankedOthers = roughNearest({lat:lastGeo.lat,lng:lastGeo.lng}, others);
+          ranked = ranked.concat(rankedOthers.slice(0, 5 - ranked.length));
+        }
+        
+        ranked = ranked.slice(0, 5);
+        
+        // Update the display
+        makeCards(ranked);
+        
+        const title = qs('#titleTop');
+        if (title) {
+          const debugInfo = `${lastGeo.lat.toFixed(3)}, ${lastGeo.lng.toFixed(3)}`;
+          title.innerHTML = `Nearest centres <span style="font-weight:600;color:#50607a;font-size:.95rem">(${lastGeo.city}, ${lastGeo.region} - corrected)</span>
+            <br><span style="font-size:0.8rem;color:#718096;">Using coordinates: ${debugInfo}</span>`;
+        }
+      } else {
+        alert('City not recognized. Please try: Manchester, London, Birmingham, Leeds, Glasgow, Edinburgh, Liverpool, Bristol, Sheffield, Cardiff, Newcastle, or Nottingham');
+      }
+    }
+  };
+
+})();
+</script>
+</body>
+</html>

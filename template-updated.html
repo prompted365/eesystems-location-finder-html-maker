@@ -427,14 +427,26 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
         const debugInfo = `${loc.lat.toFixed(3)}, ${loc.lng.toFixed(3)}`;
         const serviceInfo = loc.service ? ` via ${loc.service}` : '';
         
-        // Add manual correction option for UK users
+        // Add manual correction option and warnings
         let correctionButton = '';
-        if (loc.country !== 'united kingdom') {
-          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#e2e8f0;border:1px solid #cbd5e0;border-radius:4px;cursor:pointer;">Wrong location? Click if you're in the UK</button>`;
+        let warningMessage = '';
+        
+        if (loc.country === 'united kingdom') {
+          // Check if coordinates seem wrong for UK location
+          const distToManchester = haversine({lat: loc.lat, lng: loc.lng}, {lat: 53.4808, lng: -2.2426});
+          const distToLondon = haversine({lat: loc.lat, lng: loc.lng}, {lat: 51.5074, lng: -0.1278});
+          
+          if (distToManchester > 50 && distToLondon < 50) {
+            warningMessage = `<br><span style="font-size:0.8rem;color:#e53e3e;">⚠️ Detected near London area. If you're in Manchester or northern England, please correct below.</span>`;
+          }
+          
+          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#e53e3e;color:white;border:1px solid #c53030;border-radius:4px;cursor:pointer;">🔧 Wrong city? Click to correct manually</button>`;
+        } else {
+          correctionButton = `<br><button onclick="correctLocationToUK()" style="font-size:0.8rem;padding:4px 8px;margin-top:4px;background:#3182ce;color:white;border:1px solid #2c5aa0;border-radius:4px;cursor:pointer;">🇬🇧 In the UK? Click here</button>`;
         }
         
         title.innerHTML = `Nearest centres <span style="font-weight:600;color:#50607a;font-size:.95rem">(${where}${serviceInfo})</span>
-          <br><span style="font-size:0.8rem;color:#718096;">Detected coordinates: ${debugInfo}</span>${correctionButton}`;
+          <br><span style="font-size:0.8rem;color:#718096;">Detected coordinates: ${debugInfo}</span>${warningMessage}${correctionButton}`;
       }
 
       updateLoadingStep('Finding nearby centers...', 80);
@@ -543,7 +555,7 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;ba
       
       // Common UK cities with coordinates
       const ukCities = {
-        'manchester': {lat: 53.478, lng: -2.248, city: 'Manchester', region: 'England'},
+        'manchester': {lat: 53.4808, lng: -2.2426, city: 'Manchester', region: 'England'},
         'london': {lat: 51.5074, lng: -0.1278, city: 'London', region: 'England'},
         'birmingham': {lat: 52.4862, lng: -1.8904, city: 'Birmingham', region: 'England'},
         'leeds': {lat: 53.8008, lng: -1.5491, city: 'Leeds', region: 'England'},

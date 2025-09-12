@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manchester Distance Test</title>
+</head>
+<body>
+<h1>Testing Distance from Manchester to UK EE Centers</h1>
+<div id="results"></div>
+
+<script>
+// Manchester coordinates
+const manchester = {lat: 53.4808, lng: -2.2426};
+
+// UK EE Centers from the CSV
+const ukCenters = [
+    {name: "Energy Enhancement Centre LTD", address: "163 Mays Ln, Barnet EN5 2DY, UK", lat: 51.6252, lng: -0.2004},
+    {name: "EE Crystal Centre - Leeds Stockton", address: "The Coach House, School Ln, Leeds LS15 4LJ, UK", lat: 53.7949, lng: -1.4517},
+    {name: "EE Crystal Centre - Chorley", address: "The Barn, Chorley Hall Ln, Chorley PR7 3BE, UK", lat: 53.6582, lng: -2.6293}
+];
+
+// Haversine distance calculation
+function haversine(p1, p2) {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+    const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+let html = `<p><strong>From Manchester (${manchester.lat}, ${manchester.lng}):</strong></p><ul>`;
+
+ukCenters.forEach(center => {
+    const distance = haversine(manchester, center);
+    html += `<li><strong>${center.name}</strong><br>
+             ${center.address}<br>
+             Distance: <strong>${distance.toFixed(1)} miles</strong></li><br>`;
+});
+
+html += `</ul>`;
+
+// Also test from London coordinates (what the geolocation might be returning)
+const london = {lat: 51.5074, lng: -0.1278};
+html += `<hr><p><strong>From London (${london.lat}, ${london.lng}) - if this is what geolocation detects:</strong></p><ul>`;
+
+ukCenters.forEach(center => {
+    const distance = haversine(london, center);
+    html += `<li><strong>${center.name}</strong><br>
+             ${center.address}<br>
+             Distance: <strong>${distance.toFixed(1)} miles</strong></li><br>`;
+});
+
+html += `</ul>`;
+
+document.getElementById('results').innerHTML = html;
+</script>
+</body>
+</html>
