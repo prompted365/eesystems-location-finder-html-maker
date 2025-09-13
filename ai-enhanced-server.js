@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const csv = require('csv-parser');
@@ -6,9 +7,13 @@ const fsSync = require('fs');
 const path = require('path');
 const validator = require('validator');
 const rateLimit = require('express-rate-limit');
+const DatabaseManager = require('./redis-db');
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+// Initialize database manager
+const dbManager = new DatabaseManager();
 
 // Rate limiting
 const limiter = rateLimit({
@@ -81,20 +86,13 @@ function ensureHttps(url) {
   return cleanUrl;
 }
 
-// Load database
+// Database functions (now using DatabaseManager)
 async function loadDatabase() {
-  try {
-    const data = await fs.readFile(DB_PATH, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    return { locations: [], lastUpdated: new Date().toISOString() };
-  }
+  return await dbManager.loadDatabase();
 }
 
-// Save database
-async function saveDatabase(db) {
-  db.lastUpdated = new Date().toISOString();
-  await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2));
+async function saveDatabase(database) {
+  return await dbManager.saveDatabase(database);
 }
 
 // Parse CSV data
@@ -563,11 +561,40 @@ app.use((error, req, res, next) => {
 // Create uploads directory if it doesn't exist
 fsSync.mkdirSync('uploads', { recursive: true });
 
-app.listen(port, () => {
-  console.log(`AI-Enhanced EESystem Location Webapp running at http://localhost:${port}`);
-  console.log('Features:');
-  console.log('- CSV upload with database comparison');
-  console.log('- Hardcoded locations for fast loading');
-  console.log('- AI-powered difference detection');
-  console.log('- Database persistence and updates');
+// Initialize database and start server
+async function startServer() {
+  try {
+    // Connect to database
+    await dbManager.connect();
+    
+    // Start Express server
+    app.listen(port, () => {
+      console.log(`AI-Enhanced EESystem Location Webapp running at http://localhost:${port}`);
+      console.log('Features:');
+      console.log('- CSV upload with database comparison');
+      console.log('- Hardcoded locations for fast loading');
+      console.log('- AI-powered difference detection');
+      console.log('- Database persistence with Redis/JSON fallback');
+      console.log(`- Storage mode: ${dbManager.useLocalDB ? 'Local JSON' : 'Redis'}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Handle graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n📴 Shutting down gracefully...');
+  await dbManager.disconnect();
+  process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+  console.log('\n📴 Shutting down gracefully...');
+  await dbManager.disconnect();
+  process.exit(0);
+});
+
+// Start the server
+startServer();
