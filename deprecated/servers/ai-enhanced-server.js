@@ -12,6 +12,9 @@ const DatabaseManager = require('./postgres-db');
 const app = express();
 const port = process.env.PORT || 3001;
 
+const enableAdmin = process.env.ENABLE_ADMIN === 'true';
+const adminToken = process.env.ADMIN_TOKEN;
+
 // Initialize database manager
 const dbManager = new DatabaseManager();
 
@@ -24,7 +27,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 // Serve static files
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
 // Redirect root to location finder
 app.get('/', (req, res) => {
@@ -33,13 +36,25 @@ app.get('/', (req, res) => {
 
 // Serve the location finder page
 app.get('/finder', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'finder.html'));
+  res.sendFile(path.join(__dirname, '..', '..', 'public', 'finder.html'));
 });
 
 // Admin interface for testing and validation
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
+if (enableAdmin) {
+  if (!adminToken) {
+    console.warn('ENABLE_ADMIN is set but ADMIN_TOKEN is missing');
+  }
+  const adminAuth = (req, res, next) => {
+    const token = req.query.token || req.headers['x-admin-token'];
+    if (adminToken && token === adminToken) {
+      return next();
+    }
+    res.status(401).json({ error: 'Unauthorized' });
+  };
+  app.get('/admin', adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
+  });
+}
 app.use(express.json());
 
 // Configure multer for file uploads
