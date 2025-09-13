@@ -536,15 +536,26 @@ app.post('/upload', upload.single('csvFile'), async (req, res) => {
 app.get('/api/status', async (req, res) => {
   try {
     const db = await loadDatabase();
+    console.log(`📊 Status API: Found ${db.locations.length} locations, last updated: ${db.lastUpdated}`);
     res.json({
+      success: true,
+      status: 'operational',
+      locations: db.locations.length,
       totalLocations: db.locations.length,
       lastUpdated: db.lastUpdated,
+      databaseType: dbManager.useLocalDB ? 'JSON' : 'PostgreSQL',
       recentlyAdded: db.locations
         .filter(loc => new Date(loc.processed) > new Date(Date.now() - 24 * 60 * 60 * 1000))
         .length
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get database status' });
+    console.error('❌ Status API error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to get database status',
+      status: 'error',
+      locations: 0
+    });
   }
 });
 
