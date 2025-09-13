@@ -36,9 +36,9 @@ app.get('/finder', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'finder.html'));
 });
 
-// Admin interface for CSV management
+// Admin interface for testing and validation
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 app.use(express.json());
 
