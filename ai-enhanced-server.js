@@ -858,7 +858,7 @@ app.get('/api/locations/ip-location', async (req, res) => {
 
     console.log(`🌐 IP Geolocation request - Client IP: ${clientIP}`);
 
-    // If localhost or private IP, use a default location for development
+    // If localhost or private IP, use Manchester coordinates for UK testing
     if (!clientIP || 
         clientIP === '127.0.0.1' || 
         clientIP === '::1' || 
@@ -866,13 +866,13 @@ app.get('/api/locations/ip-location', async (req, res) => {
         clientIP.startsWith('192.168.') ||
         clientIP.startsWith('10.') ||
         clientIP.startsWith('172.')) {
-      console.log('🏠 Local/private IP detected - using default location');
+      console.log('🏠 Local/private IP detected - using Manchester UK for testing');
       return res.json({
         success: true,
         location: {
-          lat: 51.5074,
-          lng: -0.1278,
-          city: 'London',
+          lat: 53.4808,
+          lng: -2.2426,
+          city: 'Manchester',
           country: 'United Kingdom',
           source: 'development_default'
         }
