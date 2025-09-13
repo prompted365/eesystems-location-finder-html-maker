@@ -7,7 +7,7 @@ const fsSync = require('fs');
 const path = require('path');
 const validator = require('validator');
 const rateLimit = require('express-rate-limit');
-const DatabaseManager = require('./redis-db');
+const DatabaseManager = require('./postgres-db');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -574,8 +574,8 @@ async function startServer() {
       console.log('- CSV upload with database comparison');
       console.log('- Hardcoded locations for fast loading');
       console.log('- AI-powered difference detection');
-      console.log('- Database persistence with Redis/JSON fallback');
-      console.log(`- Storage mode: ${dbManager.useLocalDB ? 'Local JSON' : 'Redis'}`);
+      console.log('- Database persistence with PostgreSQL/JSON fallback');
+      console.log(`- Storage mode: ${dbManager.useLocalDB ? 'Local JSON' : 'PostgreSQL'}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
