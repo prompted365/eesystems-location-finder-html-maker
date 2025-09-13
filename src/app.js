@@ -7,6 +7,7 @@ const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { validate, schemas } = require('./lib/validate');
+const haversine = require('./lib/haversine');
 const geocode = require('./core/geocode');
 
 const app = express();
@@ -74,17 +75,6 @@ function formatLocation(location) {
   };
 }
 
-function calculateDistance(lat1, lng1, lat2, lng2) {
-  const R = 3959;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
 app.get('/api/locations/search', validate(schemas.search), (req, res) => {
   const { q, limit } = req.validated;
   const query = q.toLowerCase();
@@ -105,7 +95,7 @@ app.get('/api/locations/nearest', validate(schemas.nearest), (req, res) => {
   const results = (store?.locations || [])
     .filter(loc => loc.latitude && loc.longitude)
     .map(loc => {
-      const distance = calculateDistance(lat, lng, parseFloat(loc.latitude), parseFloat(loc.longitude));
+      const distance = haversine(lat, lng, parseFloat(loc.latitude), parseFloat(loc.longitude));
       return { ...formatLocation(loc), distance };
     })
     .sort((a, b) => a.distance - b.distance)
