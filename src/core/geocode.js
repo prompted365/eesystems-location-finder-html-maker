@@ -2,7 +2,9 @@ const crypto = require('crypto');
 const redis = require('redis');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+const config = require('../config');
+
+const REDIS_URL = config.REDIS_URL || 'redis://localhost:6379';
 const TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 let redisClient;
@@ -33,8 +35,8 @@ async function geocode(address) {
     }
 
     const headers = {};
-    if (process.env.NOMINATIM_UA) headers['User-Agent'] = process.env.NOMINATIM_UA;
-    if (process.env.NOMINATIM_EMAIL) headers['email'] = process.env.NOMINATIM_EMAIL;
+    if (config.NOMINATIM_UA) headers['User-Agent'] = config.NOMINATIM_UA;
+    if (config.NOMINATIM_EMAIL) headers['email'] = config.NOMINATIM_EMAIL;
 
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
     let attempt = 0;

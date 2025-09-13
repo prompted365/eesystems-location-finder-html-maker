@@ -7,9 +7,10 @@ const validator = require('validator');
 const rateLimit = require('express-rate-limit');
 const { OpenAI } = require('openai');
 const axios = require('axios');
+const config = require('../../src/config');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = config.PORT;
 
 // OpenAI Configuration
 const openai = new OpenAI({

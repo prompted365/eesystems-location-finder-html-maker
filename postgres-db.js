@@ -1,11 +1,12 @@
 const { Pool } = require('pg');
 const fs = require('fs').promises;
 const path = require('path');
+const config = require('./src/config');
 
 class DatabaseManager {
   constructor() {
     this.pool = null;
-    this.useLocalDB = process.env.USE_LOCAL_DB === 'true' || !process.env.DATABASE_URL;
+    this.useLocalDB = config.USE_LOCAL_DB || !config.DATABASE_URL;
     this.dbPath = path.join(__dirname, 'data', 'locations.json');
   }
 
@@ -17,8 +18,8 @@ class DatabaseManager {
 
     try {
       this.pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+        connectionString: config.DATABASE_URL,
+        ssl: config.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
       });
 
       // Test the connection

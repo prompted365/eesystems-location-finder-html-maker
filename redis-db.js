@@ -1,11 +1,12 @@
 const redis = require('redis');
 const fs = require('fs').promises;
 const path = require('path');
+const config = require('./src/config');
 
 class DatabaseManager {
   constructor() {
     this.client = null;
-    this.useLocalDB = process.env.USE_LOCAL_DB === 'true' || !process.env.REDIS_URL;
+    this.useLocalDB = config.USE_LOCAL_DB || !config.REDIS_URL;
     this.dbPath = path.join(__dirname, 'data', 'locations.json');
   }
 
@@ -16,7 +17,7 @@ class DatabaseManager {
     }
 
     try {
-      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      const redisUrl = config.REDIS_URL || 'redis://localhost:6379';
       this.client = redis.createClient({
         url: redisUrl,
         socket: {
