@@ -7,7 +7,7 @@
     "start": "node src/app.js",
     "dev": "node src/app.js",
     "claude": "claude",
-    "test": "npm run test:unit && npm run test:smoke && npm run test:e2e",
+    "test": "npm run test:unit -- --coverage=$npm_config_coverage && npm run test:smoke -- --coverage=$npm_config_coverage && npm run test:e2e -- --coverage=$npm_config_coverage",
     "test:unit": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/unit --runInBand",
     "test:smoke": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/smoke --runInBand",
     "test:e2e": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --runInBand"
@@ -43,5 +43,15 @@
   "devDependencies": {
     "jest": "^30.1.3",
     "supertest": "^7.1.4"
+  },
+  "jest": {
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
   }
 }
