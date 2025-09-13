@@ -1037,22 +1037,44 @@
             updateHeight() {
                 if (!this.isInIframe) return;
 
-                // Get the full document height
+                // Get more accurate content height
                 const bodyHeight = document.body.scrollHeight;
                 const documentHeight = document.documentElement.scrollHeight;
                 const windowHeight = window.innerHeight;
                 
-                // Use the maximum of all measurements
-                const newHeight = Math.max(bodyHeight, documentHeight, windowHeight);
+                // Get height of actual visible content
+                const heroSection = document.querySelector('.hero-section');
+                const educationalContent = document.querySelector('.educational-content');
+                const resultsSection = document.querySelector('.results-section');
+                
+                let contentHeight = 0;
+                
+                if (heroSection) contentHeight += heroSection.offsetHeight;
+                if (educationalContent && !educationalContent.classList.contains('hidden')) {
+                    contentHeight += educationalContent.offsetHeight;
+                }
+                if (resultsSection && resultsSection.classList.contains('show')) {
+                    contentHeight += resultsSection.offsetHeight;
+                }
+                
+                // Add some padding
+                contentHeight += 40;
+                
+                // Use content height or fallback to document height, with bounds
+                const newHeight = Math.max(
+                    Math.min(contentHeight, bodyHeight, documentHeight), 
+                    500, // minimum
+                    Math.min(contentHeight + 100, 1500) // maximum with buffer
+                );
                 
                 // Only update if height changed significantly (avoid infinite loops)
-                if (Math.abs(newHeight - this.lastHeight) > 10) {
+                if (Math.abs(newHeight - this.lastHeight) > 20) {
                     this.lastHeight = newHeight;
                     
                     // Send height to parent window (GHL funnel)
                     this.sendHeightToParent(newHeight);
                     
-                    console.log(`📏 Updated iframe height: ${newHeight}px`);
+                    console.log(`📏 Updated iframe height: ${newHeight}px (content: ${contentHeight}px)`);
                 }
             }
 
