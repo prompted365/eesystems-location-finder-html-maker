@@ -10,9 +10,11 @@ const { validate, schemas } = require('./lib/validate');
 const haversine = require('./lib/haversine');
 const geocode = require('./core/geocode');
 
+const config = require('./config');
+
 const app = express();
-const port = process.env.PORT || 3000;
-const isProd = process.env.NODE_ENV === 'production';
+const port = config.PORT;
+const isProd = config.NODE_ENV === 'production';
 const logger = pino({
   level: isProd ? 'info' : 'debug'
 });
@@ -25,20 +27,20 @@ app.use(express.json());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100
+  max: config.RATE_LIMIT_MAX
 });
 app.use('/search', limiter);
 app.use('/api/locations/geocode', limiter);
 app.use('/upload', limiter);
 
 const runtime = {
-  dataStore: process.env.DATA_STORE || 'json',
-  mode: process.env.MODE || 'basic',
-  geocoder: process.env.GEOCODER || 'nominatim'
+  dataStore: config.DATA_STORE,
+  mode: config.MODE,
+  geocoder: config.GEOCODER
 };
 
-const enableAdmin = process.env.ENABLE_ADMIN === 'true';
-const adminToken = process.env.ADMIN_TOKEN;
+const enableAdmin = config.ENABLE_ADMIN;
+const adminToken = config.ADMIN_TOKEN;
 
 let store;
 try {

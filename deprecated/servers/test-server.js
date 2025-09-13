@@ -6,9 +6,10 @@ const fsSync = require('fs');
 const path = require('path');
 const validator = require('validator');
 const rateLimit = require('express-rate-limit');
+const config = require('../../src/config');
 
 const app = express();
-const port = process.env.PORT || 3002;
+const port = config.PORT;
 
 // Rate limiting
 const limiter = rateLimit({

@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const csv = require('csv-parser');
@@ -8,12 +7,13 @@ const path = require('path');
 const validator = require('validator');
 const rateLimit = require('express-rate-limit');
 const DatabaseManager = require('./postgres-db');
+const config = require('../../src/config');
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = config.PORT;
 
-const enableAdmin = process.env.ENABLE_ADMIN === 'true';
-const adminToken = process.env.ADMIN_TOKEN;
+const enableAdmin = config.ENABLE_ADMIN;
+const adminToken = config.ADMIN_TOKEN;
 
 // Initialize database manager
 const dbManager = new DatabaseManager();

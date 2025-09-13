@@ -109,9 +109,21 @@ The generated HTML includes:
 
 ### Environment Variables
 
-- `NOMINATIM_UA` – User-Agent string (include contact email) for Nominatim requests
-- `NOMINATIM_EMAIL` – Contact email sent with Nominatim requests
-- `REDIS_URL` – Redis connection string for geocode caching (default `redis://localhost:6379`)
+| Variable | Default | Description |
+| --- | --- | --- |
+| `PORT` | `3000` | Server port |
+| `NODE_ENV` | `development` | Node environment |
+| `RATE_LIMIT_MAX` | `100` | Max requests per 15‑minute window |
+| `DATA_STORE` | `json` | Backend store (`json`, `postgres`, `redis`) |
+| `MODE` | `basic` | Application mode |
+| `GEOCODER` | `nominatim` | Geocoding service |
+| `ENABLE_ADMIN` | `false` | Enable admin routes |
+| `ADMIN_TOKEN` | – | Token required when admin mode enabled |
+| `USE_LOCAL_DB` | `false` | Force local JSON database |
+| `DATABASE_URL` | – | PostgreSQL connection string |
+| `REDIS_URL` | – | Redis connection string (geocode cache defaults to `redis://localhost:6379` if unset) |
+| `NOMINATIM_UA` | – | User-Agent for Nominatim requests |
+| `NOMINATIM_EMAIL` | – | Contact email sent with Nominatim requests |
 
 ## 🔐 Admin Mode (Local Testing)
 
