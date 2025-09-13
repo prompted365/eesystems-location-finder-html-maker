@@ -984,8 +984,11 @@
 
     <!-- Enhanced iframe height messaging for GHL integration -->
     <script>
-        // Simple and robust height sender for GHL iframes
+        // Debounced height sender for GHL iframes (prevents scroll jumping)
         (function() {
+            var lastHeight = 0;
+            var debounceTimeout = null;
+            
             function sendHeight() {
                 var h = Math.max(
                     document.documentElement.scrollHeight,
@@ -994,33 +997,44 @@
                     document.body.offsetHeight
                 );
                 
+                // Only send if height changed significantly (reduces scroll triggers)
+                if (Math.abs(h - lastHeight) < 50) {
+                    return; // Skip small changes
+                }
+                
+                lastHeight = h;
                 console.log('📏 Sending height to parent:', h + 'px');
                 
                 // Post height to the parent with multiple message formats
                 try {
-                    window.parent.postMessage({ type: 'eesystem-iframe-height', height: h }, '*');
-                    window.parent.postMessage({ height: h }, '*');
+                    window.parent.postMessage({ type: 'eesystem-iframe-height', height: h, preventScroll: true }, '*');
+                    window.parent.postMessage({ height: h, preventScroll: true }, '*');
                     window.parent.postMessage(h, '*');
                 } catch (error) {
                     console.log('Could not send height to parent:', error.message);
                 }
             }
+            
+            function debouncedSendHeight() {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(sendHeight, 150); // Debounce 150ms
+            }
 
             // Initial + on changes
             window.addEventListener('load', sendHeight);
-            window.addEventListener('resize', sendHeight);
+            window.addEventListener('resize', debouncedSendHeight);
 
-            // Watch DOM changes (content expands after data loads, accordions, etc.)
+            // Watch DOM changes with debouncing
             if (typeof ResizeObserver !== 'undefined') {
-                var ro = new ResizeObserver(sendHeight);
+                var ro = new ResizeObserver(debouncedSendHeight);
                 ro.observe(document.body);
             }
 
-            // If you load async content, poll briefly for dynamic changes
+            // Reduced polling frequency
             var i = 0, t = setInterval(function() {
-                sendHeight();
-                if (++i > 20) clearInterval(t); // ~2s
-            }, 100);
+                debouncedSendHeight();
+                if (++i > 10) clearInterval(t); // Reduced to 10 iterations
+            }, 200); // Slower polling
 
             // Make sendHeight available globally for manual triggering
             window.sendHeight = sendHeight;
