@@ -665,7 +665,7 @@ app.post('/api/locations/geocode', async (req, res) => {
         coordinates = baseCoords[prefix] || baseCoords[firstPart.charAt(0)];
       }
     } else {
-      // Mock city/address geocoding
+      // Mock city/address geocoding - expanded with more cities
       const mockCityCoordinates = {
         'manchester': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
         'london': { lat: 51.5074, lng: -0.1278, city: 'London', country: 'United Kingdom' },
@@ -674,7 +674,19 @@ app.post('/api/locations/geocode', async (req, res) => {
         'leeds': { lat: 53.8008, lng: -1.5491, city: 'Leeds', country: 'United Kingdom' },
         'new york': { lat: 40.7128, lng: -74.0060, city: 'New York', country: 'United States' },
         'los angeles': { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', country: 'United States' },
-        'chicago': { lat: 41.8781, lng: -87.6298, city: 'Chicago', country: 'United States' }
+        'chicago': { lat: 41.8781, lng: -87.6298, city: 'Chicago', country: 'United States' },
+        'las vegas': { lat: 36.1699, lng: -115.1398, city: 'Las Vegas', country: 'United States' },
+        'phoenix': { lat: 33.4484, lng: -112.0740, city: 'Phoenix', country: 'United States' },
+        'houston': { lat: 29.7604, lng: -95.3698, city: 'Houston', country: 'United States' },
+        'dallas': { lat: 32.7767, lng: -96.7970, city: 'Dallas', country: 'United States' },
+        'san francisco': { lat: 37.7749, lng: -122.4194, city: 'San Francisco', country: 'United States' },
+        'miami': { lat: 25.7617, lng: -80.1918, city: 'Miami', country: 'United States' },
+        'atlanta': { lat: 33.7490, lng: -84.3880, city: 'Atlanta', country: 'United States' },
+        'seattle': { lat: 47.6062, lng: -122.3321, city: 'Seattle', country: 'United States' },
+        'denver': { lat: 39.7392, lng: -104.9903, city: 'Denver', country: 'United States' },
+        'austin': { lat: 30.2672, lng: -97.7431, city: 'Austin', country: 'United States' },
+        'san diego': { lat: 32.7157, lng: -117.1611, city: 'San Diego', country: 'United States' },
+        'portland': { lat: 45.5152, lng: -122.6784, city: 'Portland', country: 'United States' }
       };
       
       const normalizedQuery = query.toLowerCase();
