@@ -187,7 +187,7 @@ curl http://localhost:3001/api/status
 - `src/app.js` - Main server with all APIs
 - `public/finder.html` - Location finder interface
 - `public/index.html` - Admin interface (to be enhanced)
-- `database.json` - Location database
+- `data/locations.json` - Canonical location database (`deprecated/data/database.json` retained for history)
 - `ee-systems-locations.csv` - CSV data source
 
 **Testing URLs:**
