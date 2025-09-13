@@ -65,6 +65,14 @@
             font-size: 1.4rem;
             color: rgba(255, 255, 255, 0.9);
             font-weight: 500;
+            margin-bottom: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .privacy-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
             margin-bottom: 40px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
@@ -662,8 +670,9 @@
             <path d="M335 50 L345 35 L355 50 L365 35" stroke="url(#logoGradient)" stroke-width="2" fill="none"/>
         </svg>
 
-        <h1 class="main-title">Let's Find Your Closest EESystem Center</h1>
-        <p class="subtitle">We'll show nearby centres automatically based on your area.<br>Privacy: we don't save your location. Matching happens in your browser.</p>
+        <h1 class="main-title">Let's Find Your Closest<br>EESystem Center</h1>
+        <p class="subtitle">We'll show nearby centres automatically based on your area.</p>
+        <p class="privacy-text">Privacy: we don't save your location. Matching happens in your browser.</p>
 
         <!-- Master Search -->
         <div class="master-search">
@@ -872,7 +881,7 @@
                         this.allLocations = this.enhanceLocationData(data.locations);
                         this.applyCurrentFilter();
                         
-                        this.updateResultsHeader(`Centers in ${country}`, `${this.allLocations.length} centers found`);
+                        this.updateResultsHeader(`EESystem Centers in ${country}`, `${this.allLocations.length} centers found`, true);
                         
                         if (this.allLocations.length === 0) {
                             this.showEmptyResults();
@@ -1003,8 +1012,8 @@
                         this.allLocations = this.enhanceLocationData(data.locations);
                         this.applyCurrentFilter();
                         
-                        const locationName = this.userLocation.city || 'your location';
-                        this.updateResultsHeader(`Centers near ${locationName}`, `${this.allLocations.length} centers found`);
+                        const locationName = this.userLocation.city || 'You';
+                        this.updateResultsHeader(`EESystem Centers Near ${locationName}`, `${this.allLocations.length} centers found`, true);
                         
                         if (this.allLocations.length === 0) {
                             this.showEmptyResults();
@@ -1299,9 +1308,13 @@
                 }
             }
 
-            updateResultsHeader(title, subtitle) {
+            updateResultsHeader(title, subtitle, showHelpText = false) {
                 this.resultsTitle.textContent = title;
-                this.resultsSubtitle.textContent = subtitle;
+                if (showHelpText) {
+                    this.resultsSubtitle.innerHTML = `${subtitle}<br><small style="color: #9ca3af; font-size: 0.9rem;">Does this seem wrong? Please use the search bar above or click advanced filters above</small>`;
+                } else {
+                    this.resultsSubtitle.textContent = subtitle;
+                }
             }
 
             showEmptyResults() {
