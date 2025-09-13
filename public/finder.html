@@ -3,14 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find A Public System | Energy Enhancement System</title>
+    <title>Let's Find Your Closest EESystem Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Mapbox GL JS -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -20,336 +16,243 @@
         }
 
         body {
-            font-family: 'Open Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: #ffffff;
-            color: #333;
+            color: #2d3748;
             line-height: 1.6;
+            min-height: 100vh;
         }
 
-        /* Header Navigation */
-        .header-nav {
-            background: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        /* Header Section */
+        .header-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 60px 20px 40px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .nav-container {
+        .main-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-weight: 400;
+        }
+
+        /* Main Container */
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 70px;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .logo-text {
-            color: #333;
-            font-weight: 600;
-            font-size: 18px;
-        }
-
-        .nav-menu {
-            display: flex;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .nav-link {
-            color: #666;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: #667eea;
-        }
-
-        .nav-link.active {
-            color: #f39c12;
-        }
-
-        /* Hero Section */
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 80px 20px 60px;
-        }
-
-        .hero-title {
-            font-size: 3.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .hero-subtitle {
-            font-size: 1.3rem;
-            font-weight: 300;
-            opacity: 0.9;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            max-width: 1400px;
-            margin: 0 auto;
             padding: 40px 20px;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 2.2rem;
-            color: #2c3e50;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .section-subtitle {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-        }
-
-        /* Stats Section */
-        .stats-section {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin: 30px 0;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-pin {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .stat-pin.open { background: #e67e22; }
-        .stat-pin.large-open { background: #f39c12; }
-        .stat-pin.small-open { background: #d35400; }
-        .stat-pin.coming-soon { background: #95a5a6; }
-
-        .stat-text {
-            font-size: 0.9rem;
-            color: #666;
-            font-weight: 500;
-        }
-
-        /* Layout Container */
-        .finder-container {
             display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 30px;
-            margin-top: 30px;
-            min-height: 600px;
+            grid-template-columns: 350px 1fr;
+            gap: 40px;
+            min-height: calc(100vh - 240px);
         }
 
-        /* Left Sidebar */
-        .sidebar {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
+        /* Left Panel - Search Controls */
+        .search-panel {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 30px;
             height: fit-content;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .search-section {
-            margin-bottom: 25px;
+        .search-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 24px;
         }
 
-        .search-input {
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-select, .form-input {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #e2e8f0;
             border-radius: 8px;
             font-size: 16px;
-            margin-bottom: 15px;
-            transition: border-color 0.3s ease;
+            background: white;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
         }
 
-        .search-input:focus {
+        .form-select:focus, .form-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #00e5ff;
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+        }
+
+        .form-select:disabled {
+            background: #f7fafc;
+            color: #a0aec0;
+            cursor: not-allowed;
         }
 
         .search-button {
             width: 100%;
-            padding: 12px;
-            background: #e67e22;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #00e5ff 0%, #17ff9e 100%);
             color: white;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-bottom: 15px;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .search-button:hover {
-            background: #d35400;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 229, 255, 0.3);
         }
 
-        .locate-button {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s ease;
+        .search-button:disabled {
+            background: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .locate-button:hover {
-            background: #5a6fd8;
-        }
-
-        /* Results List */
-        .results-list {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .result-item {
+        /* Right Panel - Results */
+        .results-panel {
             background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .result-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-color: #667eea;
+        .results-header {
+            margin-bottom: 24px;
         }
 
-        .result-name {
+        .results-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.4rem;
             font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .result-address {
-            color: #666;
-            font-size: 14px;
+            color: #2d3748;
             margin-bottom: 8px;
         }
 
-        .result-distance {
-            color: #e67e22;
-            font-weight: 600;
-            font-size: 14px;
+        .results-subtitle {
+            color: #718096;
+            font-size: 1rem;
         }
 
-        .result-actions {
+        /* Location Cards */
+        .locations-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .location-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .location-card:hover {
+            border-color: #00e5ff;
+            box-shadow: 0 4px 12px rgba(0, 229, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .location-name {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .location-address {
+            color: #718096;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .location-actions {
             display: flex;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 12px;
         }
 
         .action-btn {
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
             cursor: pointer;
+            transition: all 0.3s ease;
             text-decoration: none;
             text-align: center;
-            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
         }
 
         .btn-book {
-            background: #e67e22;
+            background: linear-gradient(135deg, #00e5ff 0%, #17ff9e 100%);
             color: white;
+            flex: 1;
         }
 
         .btn-book:hover {
-            background: #d35400;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 229, 255, 0.3);
         }
 
         .btn-directions {
-            background: #ecf0f1;
-            color: #2c3e50;
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
         }
 
         .btn-directions:hover {
-            background: #d5dbdb;
+            background: #edf2f7;
         }
 
-        /* Map Container */
-        .map-container {
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        #map {
-            width: 100%;
-            height: 600px;
-        }
-
-        /* Loading and Status */
+        /* Loading and States */
         .loading {
             display: none;
             text-align: center;
-            padding: 20px;
+            padding: 40px;
         }
 
         .loading-spinner {
             width: 40px;
             height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #00e5ff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            margin: 0 auto 16px;
         }
 
         @keyframes spin {
@@ -357,404 +260,430 @@
             100% { transform: rotate(360deg); }
         }
 
-        .status-message {
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            display: none;
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
         }
 
-        .status-info {
-            background: #e3f2fd;
-            color: #1976d2;
-            border-left: 4px solid #1976d2;
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Status Messages */
+        .status-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 0.95rem;
+        }
+
+        .status-success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
         }
 
         .status-error {
-            background: #ffebee;
-            color: #d32f2f;
-            border-left: 4px solid #d32f2f;
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+
+        .status-info {
+            background: #ebf8ff;
+            color: #2c5282;
+            border: 1px solid #90cdf4;
         }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-            }
-            
-            .hero-title {
-                font-size: 2.5rem;
-            }
-
-            .finder-container {
+            .container {
                 grid-template-columns: 1fr;
                 gap: 20px;
+                padding: 20px;
             }
 
-            .stats-section {
-                gap: 20px;
+            .main-title {
+                font-size: 2.2rem;
             }
 
-            #map {
-                height: 400px;
+            .search-panel, .results-panel {
+                padding: 20px;
+            }
+
+            .location-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
             }
         }
 
         @media (max-width: 480px) {
-            .hero-title {
-                font-size: 2rem;
-            }
-            
-            .section-title {
-                font-size: 1.8rem;
+            .main-title {
+                font-size: 1.9rem;
             }
 
-            .nav-container {
-                padding: 0 15px;
+            .header-section {
+                padding: 40px 20px 30px;
+            }
+
+            .container {
+                padding: 20px 15px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Navigation -->
-    <header class="header-nav">
-        <div class="nav-container">
-            <div class="logo-section">
-                <div class="logo-icon">EE</div>
-                <div class="logo-text">ENERGY ENHANCEMENT SYSTEM</div>
-            </div>
-            <nav class="nav-menu">
-                <a href="#" class="nav-link">Home</a>
-                <a href="#" class="nav-link">About</a>
-                <a href="#" class="nav-link">Systems</a>
-                <a href="#" class="nav-link active">Find A Center</a>
-                <a href="#" class="nav-link">Shop</a>
-                <a href="#" class="nav-link">Media</a>
-                <a href="#" class="nav-link">Contact</a>
-            </nav>
-        </div>
+    <!-- Header -->
+    <header class="header-section">
+        <h1 class="main-title">Let's Find Your Closest EESystem Center</h1>
+        <p class="subtitle">Discover Energy Enhancement Centers worldwide with our simple location finder</p>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <h1 class="hero-title">FIND A PUBLIC<br><span style="font-size: 4rem; font-weight: 300; letter-spacing: 8px;">SYSTEM</span></h1>
-        <p class="hero-subtitle">Discover Energy Enhancement Centers Near You</p>
-    </section>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Panel - Search -->
+        <div class="search-panel">
+            <h2 class="search-title">Search Locations</h2>
+            
+            <div class="form-group">
+                <label class="form-label" for="countrySelect">Select Country</label>
+                <select id="countrySelect" class="form-select">
+                    <option value="">Choose a country...</option>
+                </select>
+            </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div class="section-header">
-            <h2 class="section-title">SEARCH THE GLOBAL MAP OF<br>EESYSTEM CENTERS</h2>
-            <p class="section-subtitle">Find the perfect center for your wellness journey</p>
+            <div class="form-group">
+                <label class="form-label" for="citySelect">Select City</label>
+                <select id="citySelect" class="form-select" disabled>
+                    <option value="">First select a country</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="postalInput">Zip/Postal Code (Optional)</label>
+                <input type="text" id="postalInput" class="form-input" 
+                       placeholder="Enter zip or postal code..." disabled>
+            </div>
+
+            <button id="searchBtn" class="search-button" disabled>
+                Find Centers
+            </button>
+
+            <div id="statusMessage" class="status-message"></div>
+            
+            <div id="loading" class="loading">
+                <div class="loading-spinner"></div>
+                <p>Finding centers...</p>
+            </div>
         </div>
 
-        <!-- Stats Section -->
-        <div class="stats-section">
-            <div class="stat-item">
-                <div class="stat-pin open">📍</div>
-                <div class="stat-text">OPEN<br>48+ unit +</div>
+        <!-- Right Panel - Results -->
+        <div class="results-panel">
+            <div class="results-header">
+                <h2 class="results-title" id="resultsTitle">EESystem Centers</h2>
+                <p class="results-subtitle" id="resultsSubtitle">Select a country to see available centers</p>
             </div>
-            <div class="stat-item">
-                <div class="stat-pin large-open">📍</div>
-                <div class="stat-text">OPEN<br>12 to 40+ unit</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-pin small-open">📍</div>
-                <div class="stat-text">OPEN<br>+ 12 unit</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-pin coming-soon">📍</div>
-                <div class="stat-text">COMING<br>SOON</div>
-            </div>
-        </div>
 
-        <!-- Finder Container -->
-        <div class="finder-container">
-            <!-- Left Sidebar -->
-            <div class="sidebar">
-                <div class="search-section">
-                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Enter a Location</h3>
-                    <input type="text" id="searchInput" class="search-input" 
-                           placeholder="City, state, or postal code...">
-                    <button id="searchBtn" class="search-button">🔍 Search</button>
-                    <button id="locateBtn" class="locate-button">📍 Use My Location</button>
-                    
-                    <div id="statusMessage" class="status-message"></div>
-                    <div id="loading" class="loading">
-                        <div class="loading-spinner"></div>
-                        <p>Finding centers...</p>
-                    </div>
+            <div id="resultsContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🌍</div>
+                    <h3 class="empty-state-title">Ready to Find Centers</h3>
+                    <p class="empty-state-text">Choose your country from the dropdown menu on the left to see EESystem centers in your area.</p>
                 </div>
-
-                <!-- Results List -->
-                <div class="results-list" id="resultsList">
-                    <p style="color: #666; text-align: center; padding: 20px;">
-                        Search for a location to see nearby EESystem centers
-                    </p>
-                </div>
-            </div>
-
-            <!-- Map Container -->
-            <div class="map-container">
-                <div id="map"></div>
             </div>
         </div>
     </div>
 
     <script>
-        class EESystemFinder {
+        class EESystemLocationFinder {
             constructor() {
-                this.map = null;
-                this.markers = [];
-                this.userLocation = null;
+                this.countries = [];
+                this.selectedCountry = '';
+                this.selectedCity = '';
                 this.initializeElements();
-                this.initializeMap();
+                this.loadCountries();
                 this.bindEvents();
-                this.autoDetectLocation();
             }
 
             initializeElements() {
-                this.searchInput = document.getElementById('searchInput');
+                this.countrySelect = document.getElementById('countrySelect');
+                this.citySelect = document.getElementById('citySelect');
+                this.postalInput = document.getElementById('postalInput');
                 this.searchBtn = document.getElementById('searchBtn');
-                this.locateBtn = document.getElementById('locateBtn');
                 this.statusMessage = document.getElementById('statusMessage');
                 this.loading = document.getElementById('loading');
-                this.resultsList = document.getElementById('resultsList');
-            }
-
-            initializeMap() {
-                // Use a free map service - OpenStreetMap with Mapbox GL JS
-                mapboxgl.accessToken = 'pk.eyJ1IjoiZWVzeXN0ZW0iLCJhIjoiY2x2YjNkdm9nMGlubTJpbjJlNTZjaHY3NyJ9.placeholder'; // You'll need to get a free Mapbox token
-                
-                // Fallback to simple div if no token
-                if (!mapboxgl.accessToken || mapboxgl.accessToken.includes('placeholder')) {
-                    document.getElementById('map').innerHTML = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #666; font-size: 18px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 48px; margin-bottom: 20px;">🗺️</div>
-                                <div>Interactive Map</div>
-                                <div style="font-size: 14px; margin-top: 10px;">Centers will be marked here</div>
-                            </div>
-                        </div>
-                    `;
-                    return;
-                }
-
-                this.map = new mapboxgl.Map({
-                    container: 'map',
-                    style: 'mapbox://styles/mapbox/light-v11',
-                    center: [-98.5795, 39.8283], // Center of US
-                    zoom: 4
-                });
-
-                this.map.addControl(new mapboxgl.NavigationControl());
+                this.resultsTitle = document.getElementById('resultsTitle');
+                this.resultsSubtitle = document.getElementById('resultsSubtitle');
+                this.resultsContainer = document.getElementById('resultsContainer');
             }
 
             bindEvents() {
+                this.countrySelect.addEventListener('change', (e) => this.handleCountryChange(e.target.value));
+                this.citySelect.addEventListener('change', (e) => this.handleCityChange(e.target.value));
                 this.searchBtn.addEventListener('click', () => this.handleSearch());
-                this.locateBtn.addEventListener('click', () => this.getCurrentLocation());
-                
-                this.searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.handleSearch();
+                this.postalInput.addEventListener('input', () => this.handlePostalInput());
+            }
+
+            async loadCountries() {
+                try {
+                    this.showLoading('Loading countries...');
+                    const response = await fetch('/api/locations/countries');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.countries = data.countries;
+                        this.populateCountryDropdown();
+                        this.hideLoading();
+                    } else {
+                        throw new Error('Failed to load countries');
                     }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus('Error loading countries. Please refresh the page.', 'error');
+                }
+            }
+
+            populateCountryDropdown() {
+                this.countrySelect.innerHTML = '<option value="">Choose a country...</option>';
+                this.countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    this.countrySelect.appendChild(option);
                 });
             }
 
-            async autoDetectLocation() {
-                try {
-                    this.showLoading('Detecting your location...');
-                    const response = await fetch('/api/locations/ip-location');
-                    const data = await response.json();
-
-                    if (data.success && data.location) {
-                        this.userLocation = {
-                            lat: data.location.lat,
-                            lng: data.location.lng
-                        };
-                        
-                        await this.findNearestLocations(
-                            data.location.lat, 
-                            data.location.lng, 
-                            data.location.city || 'your location'
-                        );
-                    }
-                } catch (error) {
-                    console.error('Auto-location error:', error);
-                    this.hideLoading();
-                }
-            }
-
-            getCurrentLocation() {
-                if (!navigator.geolocation) {
-                    this.showStatus('Geolocation is not supported by your browser', 'error');
+            async handleCountryChange(country) {
+                this.selectedCountry = country;
+                this.selectedCity = '';
+                
+                if (!country) {
+                    this.citySelect.disabled = true;
+                    this.postalInput.disabled = true;
+                    this.searchBtn.disabled = true;
+                    this.citySelect.innerHTML = '<option value="">First select a country</option>';
+                    this.showEmptyState();
                     return;
                 }
 
-                this.showLoading('Getting your precise location...');
+                try {
+                    this.showLoading('Loading cities...');
+                    
+                    // Load cities for this country
+                    const response = await fetch(`/api/locations/cities/${encodeURIComponent(country)}`);
+                    const data = await response.json();
 
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        this.userLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        this.findNearestLocations(
-                            position.coords.latitude, 
-                            position.coords.longitude, 
-                            'your current location'
-                        );
-                    },
-                    (error) => {
-                        this.hideLoading();
-                        this.showStatus('Unable to get your location. Please try searching manually.', 'error');
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-                );
+                    if (data.success) {
+                        this.populateCityDropdown(data.cities);
+                        this.citySelect.disabled = false;
+                        this.postalInput.disabled = false;
+                        
+                        // Also load all centers for this country
+                        await this.loadLocationsByCountry(country);
+                    } else {
+                        throw new Error('Failed to load cities');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus('Error loading cities for this country.', 'error');
+                }
+            }
+
+            populateCityDropdown(cities) {
+                this.citySelect.innerHTML = '<option value="">All cities in ' + this.selectedCountry + '</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    this.citySelect.appendChild(option);
+                });
+            }
+
+            async loadLocationsByCountry(country) {
+                try {
+                    const response = await fetch(`/api/locations/by-location?country=${encodeURIComponent(country)}&limit=50`);
+                    const data = await response.json();
+
+                    this.hideLoading();
+                    
+                    if (data.success) {
+                        this.displayResults(data.locations, `Centers in ${country}`);
+                        this.searchBtn.disabled = false;
+                        this.showStatus(`Found ${data.locations.length} centers in ${country}`, 'success');
+                    } else {
+                        throw new Error('Failed to load locations');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus('Error loading centers for this country.', 'error');
+                }
+            }
+
+            async handleCityChange(city) {
+                this.selectedCity = city;
+                
+                if (!city) {
+                    // Show all country results again
+                    if (this.selectedCountry) {
+                        await this.loadLocationsByCountry(this.selectedCountry);
+                    }
+                    return;
+                }
+
+                try {
+                    this.showLoading('Loading centers in ' + city + '...');
+                    
+                    const response = await fetch(`/api/locations/by-location?country=${encodeURIComponent(this.selectedCountry)}&city=${encodeURIComponent(city)}&limit=20`);
+                    const data = await response.json();
+
+                    this.hideLoading();
+                    
+                    if (data.success) {
+                        this.displayResults(data.locations, `Centers in ${city}, ${this.selectedCountry}`);
+                        if (data.locations.length === 0) {
+                            this.showStatus(`No centers found in ${city}`, 'info');
+                        } else {
+                            this.showStatus(`Found ${data.locations.length} centers in ${city}`, 'success');
+                        }
+                    } else {
+                        throw new Error('Failed to load locations');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus('Error loading centers for this city.', 'error');
+                }
+            }
+
+            handlePostalInput() {
+                // Enable search button when postal code is entered
+                if (this.postalInput.value.trim() && this.selectedCountry) {
+                    this.searchBtn.disabled = false;
+                }
             }
 
             async handleSearch() {
-                const query = this.searchInput.value.trim();
-                if (!query) {
-                    this.showStatus('Please enter a location to search', 'error');
+                const postal = this.postalInput.value.trim();
+                
+                if (!postal) {
+                    this.showStatus('Please enter a zip or postal code to search.', 'error');
                     return;
                 }
 
-                this.showLoading('Finding location...');
-
                 try {
-                    // Geocode the search query
-                    const geocodeResponse = await fetch('/api/locations/geocode', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ address: query })
-                    });
-
-                    const geocodeData = await geocodeResponse.json();
-
-                    if (!geocodeResponse.ok) {
-                        throw new Error(geocodeData.error || 'Location not found');
-                    }
-
-                    const { lat, lng, city } = geocodeData.coordinates;
-                    this.userLocation = { lat, lng };
+                    this.showLoading('Searching by postal code...');
                     
-                    await this.findNearestLocations(lat, lng, city || query);
-
-                } catch (error) {
-                    this.hideLoading();
-                    this.showStatus('Could not find that location. Please try a different search.', 'error');
-                }
-            }
-
-            async findNearestLocations(lat, lng, locationName) {
-                try {
-                    this.showLoading('Finding EESystem centers...');
-
-                    const response = await fetch(`/api/locations/nearest?lat=${lat}&lng=${lng}&limit=20`);
+                    const params = new URLSearchParams({
+                        country: this.selectedCountry,
+                        postal: postal,
+                        limit: '20'
+                    });
+                    
+                    if (this.selectedCity) {
+                        params.append('city', this.selectedCity);
+                    }
+                    
+                    const response = await fetch(`/api/locations/by-location?${params}`);
                     const data = await response.json();
 
                     this.hideLoading();
-
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Failed to find locations');
-                    }
-
-                    if (data.locations && data.locations.length > 0) {
-                        this.displayResults(data.locations, locationName);
-                        this.updateMap(data.locations, lat, lng);
-                        this.showStatus(`Found ${data.locations.length} centers near ${locationName}`, 'info');
+                    
+                    if (data.success) {
+                        this.displayResults(data.locations, `Centers near ${postal}`);
+                        if (data.locations.length === 0) {
+                            this.showStatus(`No centers found near postal code ${postal}`, 'info');
+                        } else {
+                            this.showStatus(`Found ${data.locations.length} centers near ${postal}`, 'success');
+                        }
                     } else {
-                        this.showNoResults();
-                        this.showStatus('No centers found in your area', 'error');
+                        throw new Error('Failed to search locations');
                     }
-
                 } catch (error) {
                     this.hideLoading();
-                    this.showStatus(`Error: ${error.message}`, 'error');
+                    this.showStatus('Error searching by postal code.', 'error');
                 }
             }
 
-            displayResults(locations, locationName) {
-                this.resultsList.innerHTML = '';
+            displayResults(locations, title) {
+                this.resultsTitle.textContent = title;
+                this.resultsSubtitle.textContent = `${locations.length} center${locations.length !== 1 ? 's' : ''} found`;
 
-                locations.forEach((location, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'result-item';
-                    
-                    const distance = location.distance ? location.distance.toFixed(1) : 'N/A';
-                    const unit = location.unit || 'miles';
+                if (locations.length === 0) {
+                    this.showNoResults();
+                    return;
+                }
 
-                    item.innerHTML = `
-                        <div class="result-name">${this.escapeHtml(location.name)}</div>
-                        <div class="result-address">${this.escapeHtml(location.address)}</div>
-                        <div class="result-distance">${distance} ${unit} away</div>
-                        <div class="result-actions">
-                            ${location.bookingUrl ? `
-                                <a href="${location.bookingUrl}" target="_blank" class="action-btn btn-book">Book Session</a>
-                            ` : ''}
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}" 
-                               target="_blank" class="action-btn btn-directions">Directions</a>
-                        </div>
-                    `;
+                const grid = document.createElement('div');
+                grid.className = 'locations-grid';
 
-                    item.addEventListener('click', () => {
-                        if (this.map) {
-                            this.map.flyTo({
-                                center: [location.longitude, location.latitude],
-                                zoom: 12
-                            });
-                        }
-                    });
-
-                    this.resultsList.appendChild(item);
-                });
-            }
-
-            updateMap(locations, userLat, userLng) {
-                if (!this.map) return;
-
-                // Clear existing markers
-                this.markers.forEach(marker => marker.remove());
-                this.markers = [];
-
-                // Add user location marker
-                const userMarker = new mapboxgl.Marker({ color: '#667eea' })
-                    .setLngLat([userLng, userLat])
-                    .setPopup(new mapboxgl.Popup().setHTML('<strong>Your Location</strong>'))
-                    .addTo(this.map);
-                this.markers.push(userMarker);
-
-                // Add center markers
                 locations.forEach(location => {
-                    const marker = new mapboxgl.Marker({ color: '#e67e22' })
-                        .setLngLat([location.longitude, location.latitude])
-                        .setPopup(new mapboxgl.Popup().setHTML(`
-                            <div style="font-weight: bold; margin-bottom: 5px;">${location.name}</div>
-                            <div style="font-size: 12px; color: #666;">${location.address}</div>
-                            ${location.distance ? `<div style="font-size: 12px; color: #e67e22; margin-top: 5px;">${location.distance.toFixed(1)} miles away</div>` : ''}
-                        `))
-                        .addTo(this.map);
-                    this.markers.push(marker);
+                    const card = this.createLocationCard(location);
+                    grid.appendChild(card);
                 });
 
-                // Fit map to show all locations
-                if (locations.length > 0) {
-                    const bounds = new mapboxgl.LngLatBounds();
-                    bounds.extend([userLng, userLat]);
-                    locations.forEach(location => {
-                        bounds.extend([location.longitude, location.latitude]);
-                    });
-                    this.map.fitBounds(bounds, { padding: 50 });
-                }
+                this.resultsContainer.innerHTML = '';
+                this.resultsContainer.appendChild(grid);
+            }
+
+            createLocationCard(location) {
+                const card = document.createElement('div');
+                card.className = 'location-card';
+
+                card.innerHTML = `
+                    <h3 class="location-name">${this.escapeHtml(location.name)}</h3>
+                    <p class="location-address">${this.escapeHtml(location.address)}</p>
+                    <div class="location-actions">
+                        ${location.bookingUrl ? `
+                            <a href="${location.bookingUrl}" target="_blank" class="action-btn btn-book">
+                                Book Session
+                            </a>
+                        ` : ''}
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}" 
+                           target="_blank" class="action-btn btn-directions">
+                            Get Directions
+                        </a>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            showEmptyState() {
+                this.resultsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌍</div>
+                        <h3 class="empty-state-title">Ready to Find Centers</h3>
+                        <p class="empty-state-text">Choose your country from the dropdown menu on the left to see EESystem centers in your area.</p>
+                    </div>
+                `;
+                this.resultsTitle.textContent = 'EESystem Centers';
+                this.resultsSubtitle.textContent = 'Select a country to see available centers';
             }
 
             showNoResults() {
-                this.resultsList.innerHTML = `
-                    <div style="text-align: center; padding: 30px; color: #666;">
-                        <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
-                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No Centers Found</div>
-                        <div>Try searching for a different location or check back later as new centers are added regularly.</div>
+                this.resultsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3 class="empty-state-title">No Centers Found</h3>
+                        <p class="empty-state-text">Try selecting a different city or removing the postal code filter to see more results.</p>
                     </div>
                 `;
             }
@@ -773,6 +702,11 @@
                 this.statusMessage.textContent = message;
                 this.statusMessage.className = `status-message status-${type}`;
                 this.statusMessage.style.display = 'block';
+                
+                // Auto-hide success messages after 3 seconds
+                if (type === 'success') {
+                    setTimeout(() => this.hideStatus(), 3000);
+                }
             }
 
             hideStatus() {
@@ -786,9 +720,9 @@
             }
         }
 
-        // Initialize the finder when DOM is loaded
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', () => {
-            new EESystemFinder();
+            new EESystemLocationFinder();
         });
     </script>
 </body>

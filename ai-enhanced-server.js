@@ -903,6 +903,168 @@ app.get('/api/locations/ip-location', async (req, res) => {
   }
 });
 
+// Get unique countries from database
+app.get('/api/locations/countries', async (req, res) => {
+  try {
+    const db = await loadDatabase();
+    
+    // Extract unique countries, fix data inconsistencies, and sort
+    const countries = [...new Set(
+      db.locations
+        .map(location => location.country)
+        .filter(country => country && country.trim()) // Remove null/empty
+        .map(country => {
+          // Fix common typos
+          if (country.toLowerCase().includes('austalia')) {
+            return 'Australia';
+          }
+          return country.trim();
+        })
+    )].sort();
+
+    res.json({
+      success: true,
+      countries: countries,
+      total: countries.length
+    });
+
+  } catch (error) {
+    console.error('Error getting countries:', error);
+    res.status(500).json({ error: 'Failed to get countries' });
+  }
+});
+
+// Get cities by country
+app.get('/api/locations/cities/:country', async (req, res) => {
+  try {
+    const { country } = req.params;
+    const db = await loadDatabase();
+    
+    // Extract cities from addresses for the specified country
+    const locations = db.locations.filter(location => {
+      const locationCountry = location.country?.trim();
+      return locationCountry === country || 
+             (locationCountry?.toLowerCase().includes('austalia') && country === 'Australia');
+    });
+
+    // Extract city names from addresses
+    const cities = [...new Set(
+      locations
+        .map(location => {
+          const address = location.address || '';
+          // Try to extract city from address (varies by format)
+          // For US: "City, STATE ZIP"
+          // For CA: "City, Province/Territory"
+          // For others: "City, Country" or custom formats
+          
+          let cityName = '';
+          
+          if (country === 'United States') {
+            // Extract city before ", STATE" pattern
+            const match = address.match(/([^,]+),\s*[A-Z]{2}(\s|,)/);
+            if (match) {
+              cityName = match[1].trim();
+            }
+          } else if (country === 'Canada') {
+            // Extract city before ", Province" pattern
+            const match = address.match(/([^,]+),\s*[A-Z]{2}(\s|,)/);
+            if (match) {
+              cityName = match[1].trim();
+            }
+          } else {
+            // For other countries, take first part before comma
+            const parts = address.split(',');
+            if (parts.length > 1) {
+              cityName = parts[0].trim();
+            }
+          }
+          
+          // Clean up city name
+          if (cityName) {
+            // Remove numbers and extra words
+            cityName = cityName.replace(/^\d+\s+/, ''); // Remove leading numbers
+            cityName = cityName.split(/\s+(St|Ave|Rd|Blvd|Dr|Ln|Way|Ct|Pl)/)[0]; // Remove street suffixes
+            return cityName.trim();
+          }
+          
+          return null;
+        })
+        .filter(city => city && city.length > 2 && !city.match(/^\d/)) // Filter valid city names
+    )].sort();
+
+    res.json({
+      success: true,
+      country: country,
+      cities: cities,
+      total: cities.length
+    });
+
+  } catch (error) {
+    console.error('Error getting cities:', error);
+    res.status(500).json({ error: 'Failed to get cities' });
+  }
+});
+
+// Get locations by country, city, or postal code
+app.get('/api/locations/by-location', async (req, res) => {
+  try {
+    const { country, city, postal, limit = 20 } = req.query;
+    const db = await loadDatabase();
+    
+    let filteredLocations = db.locations;
+    
+    // Filter by country
+    if (country) {
+      filteredLocations = filteredLocations.filter(location => {
+        const locationCountry = location.country?.trim();
+        return locationCountry === country || 
+               (locationCountry?.toLowerCase().includes('austalia') && country === 'Australia');
+      });
+    }
+    
+    // Filter by city if provided
+    if (city) {
+      filteredLocations = filteredLocations.filter(location => {
+        const address = (location.address || '').toLowerCase();
+        return address.includes(city.toLowerCase());
+      });
+    }
+    
+    // Filter by postal code if provided
+    if (postal) {
+      filteredLocations = filteredLocations.filter(location => {
+        const address = (location.address || '').toLowerCase();
+        return address.includes(postal.toLowerCase());
+      });
+    }
+    
+    // Format and limit results
+    const results = filteredLocations
+      .slice(0, parseInt(limit))
+      .map(location => ({
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        bookingUrl: location.bookingUrl,
+        googleMapsLink: location.googleMapsLink,
+        latitude: parseFloat(location.latitude),
+        longitude: parseFloat(location.longitude),
+        country: location.country
+      }));
+
+    res.json({
+      success: true,
+      filters: { country, city, postal },
+      locations: results,
+      total: results.length
+    });
+
+  } catch (error) {
+    console.error('Error getting locations by filter:', error);
+    res.status(500).json({ error: 'Failed to get locations' });
+  }
+});
+
 // Serve sample CSV file
 app.get('/sample.csv', (req, res) => {
   const sampleCsv = `name,address,bookingUrl,lat,lng,country,googlemaps
