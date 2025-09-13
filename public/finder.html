@@ -818,6 +818,8 @@
                     const response = await fetch('/api/locations/ip-location');
                     const data = await response.json();
 
+                    console.log('IP Geolocation Response:', data);
+
                     if (data.success && data.location) {
                         this.userLocation = data.location;
                         console.log('IP location detected:', this.userLocation);
@@ -842,7 +844,8 @@
                         // Auto-populate country dropdown when loaded
                         this.autoPopulateCountry = true;
                     } else {
-                        // Strategy 3: No location data - show search interface
+                        // IP geolocation failed or returned no location - show search interface
+                        console.log('IP geolocation failed or returned no data');
                         this.showSearchInterface();
                     }
                 } catch (error) {

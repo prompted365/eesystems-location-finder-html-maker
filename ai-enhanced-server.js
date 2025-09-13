@@ -836,72 +836,156 @@ app.get('/api/locations', async (req, res) => {
 // IP-based geolocation endpoint
 app.get('/api/locations/ip-location', async (req, res) => {
   try {
-    const clientIP = req.headers['x-forwarded-for'] || 
+    // Enhanced IP detection for cloud environments (Render, Vercel, etc.)
+    const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                     req.headers['cf-connecting-ip'] ||  // Cloudflare
                      req.headers['x-real-ip'] || 
+                     req.headers['x-client-ip'] ||
                      req.connection.remoteAddress || 
                      req.socket.remoteAddress ||
                      (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-    // If localhost, use a default location (Las Vegas for testing)
-    if (!clientIP || clientIP === '127.0.0.1' || clientIP === '::1' || clientIP.includes('localhost')) {
-      console.log('Local development - using Las Vegas as default location');
+    console.log(`🌐 IP Geolocation request - Client IP: ${clientIP}`);
+
+    // If localhost or private IP, use a default location for development
+    if (!clientIP || 
+        clientIP === '127.0.0.1' || 
+        clientIP === '::1' || 
+        clientIP.includes('localhost') ||
+        clientIP.startsWith('192.168.') ||
+        clientIP.startsWith('10.') ||
+        clientIP.startsWith('172.')) {
+      console.log('🏠 Local/private IP detected - using default location');
       return res.json({
         success: true,
         location: {
-          lat: 36.1699,
-          lng: -115.1398,
-          city: 'Las Vegas',
-          country: 'United States',
-          source: 'default'
+          lat: 51.5074,
+          lng: -0.1278,
+          city: 'London',
+          country: 'United Kingdom',
+          source: 'development_default'
         }
       });
     }
 
-    // Use ip-api.com for IP geolocation (free, no API key required)
-    const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,country,regionName,city,lat,lon`);
-    const data = await response.json();
+    console.log(`🔍 Attempting IP geolocation for: ${clientIP}`);
 
-    if (data.status === 'success') {
-      res.json({
-        success: true,
-        location: {
-          lat: data.lat,
-          lng: data.lon,
-          city: data.city,
-          region: data.regionName,
-          country: data.country,
-          source: 'ip'
+    // Try multiple IP geolocation services for better reliability
+    let locationData = null;
+    
+    // Service 1: ip-api.com (free, good coverage)
+    try {
+      const response1 = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,country,regionName,city,lat,lon,query`, {
+        timeout: 5000,
+        headers: {
+          'User-Agent': 'EESystem-LocationFinder/2.0'
         }
       });
-    } else {
-      // Fallback to default location
+      
+      if (response1.ok) {
+        const data = await response1.json();
+        console.log(`📡 IP-API response:`, data);
+        
+        if (data.status === 'success' && data.lat && data.lon) {
+          locationData = {
+            lat: data.lat,
+            lng: data.lon,
+            city: data.city,
+            region: data.regionName,
+            country: data.country,
+            source: 'ip-api.com'
+          };
+        }
+      }
+    } catch (error) {
+      console.log(`❌ IP-API failed:`, error.message);
+    }
+
+    // Service 2: ipapi.co (backup service)
+    if (!locationData) {
+      try {
+        const response2 = await fetch(`https://ipapi.co/${clientIP}/json/`, {
+          timeout: 5000,
+          headers: {
+            'User-Agent': 'EESystem-LocationFinder/2.0'
+          }
+        });
+        
+        if (response2.ok) {
+          const data = await response2.json();
+          console.log(`📡 IPAPI.co response:`, data);
+          
+          if (data.latitude && data.longitude && !data.error) {
+            locationData = {
+              lat: data.latitude,
+              lng: data.longitude,
+              city: data.city,
+              region: data.region,
+              country: data.country_name,
+              source: 'ipapi.co'
+            };
+          }
+        }
+      } catch (error) {
+        console.log(`❌ IPAPI.co failed:`, error.message);
+      }
+    }
+
+    // Service 3: Basic geolocation based on country headers
+    if (!locationData) {
+      const countryHeader = req.headers['cf-ipcountry'] || req.headers['x-country-code'];
+      if (countryHeader) {
+        console.log(`🏴 Country header detected: ${countryHeader}`);
+        locationData = getLocationFromCountryCode(countryHeader);
+        if (locationData) {
+          locationData.source = 'country_header';
+        }
+      }
+    }
+
+    if (locationData) {
+      console.log(`✅ IP geolocation successful:`, locationData);
       res.json({
         success: true,
-        location: {
-          lat: 36.1699,
-          lng: -115.1398,
-          city: 'Las Vegas',
-          country: 'United States',
-          source: 'fallback'
-        }
+        location: locationData
+      });
+    } else {
+      // Smart fallback - return null to trigger manual search instead of wrong location
+      console.log(`❌ All IP geolocation services failed for ${clientIP}`);
+      res.json({
+        success: false,
+        location: null,
+        message: 'IP geolocation failed - please use manual search or GPS location'
       });
     }
 
   } catch (error) {
     console.error('IP geolocation error:', error);
-    // Fallback to default location on error
     res.json({
-      success: true,
-      location: {
-        lat: 36.1699,
-        lng: -115.1398,
-        city: 'Las Vegas',
-        country: 'United States',
-        source: 'error_fallback'
-      }
+      success: false,
+      location: null,
+      message: 'IP geolocation failed - please use manual search or GPS location'
     });
   }
 });
+
+// Helper function to get approximate location from country code
+function getLocationFromCountryCode(countryCode) {
+  const countryLocations = {
+    'GB': { lat: 53.0, lng: -2.5, city: 'United Kingdom', country: 'United Kingdom' },
+    'US': { lat: 39.8, lng: -98.5, city: 'United States', country: 'United States' },
+    'CA': { lat: 56.1, lng: -106.3, city: 'Canada', country: 'Canada' },
+    'AU': { lat: -25.2, lng: 133.7, city: 'Australia', country: 'Australia' },
+    'DE': { lat: 51.2, lng: 10.4, city: 'Germany', country: 'Germany' },
+    'FR': { lat: 46.6, lng: 2.2, city: 'France', country: 'France' },
+    'ES': { lat: 40.5, lng: -3.7, city: 'Spain', country: 'Spain' },
+    'IT': { lat: 41.9, lng: 12.6, city: 'Italy', country: 'Italy' },
+    'NL': { lat: 52.1, lng: 5.3, city: 'Netherlands', country: 'Netherlands' },
+    'IE': { lat: 53.4, lng: -8.2, city: 'Ireland', country: 'Ireland' }
+  };
+  
+  return countryLocations[countryCode.toUpperCase()] || null;
+}
 
 // Get unique countries from database
 app.get('/api/locations/countries', async (req, res) => {
