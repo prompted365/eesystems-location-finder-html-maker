@@ -982,151 +982,49 @@
     <!-- Status Messages -->
     <div id="statusMessage" class="status-message"></div>
 
-    <!-- Dynamic iframe height script for GHL integration -->
+    <!-- Enhanced iframe height messaging for GHL integration -->
     <script>
-        // Dynamic iframe height manager for GHL funnels
-        class IframeHeightManager {
-            constructor() {
-                this.isInIframe = window.self !== window.top;
-                this.lastHeight = 0;
-                this.resizeObserver = null;
-                this.init();
-            }
-
-            init() {
-                if (!this.isInIframe) return;
-                
-                console.log('🖼️ Iframe detected - initializing dynamic height');
-                
-                // Send initial height
-                this.updateHeight();
-                
-                // Set up resize observer for content changes
-                this.setupResizeObserver();
-                
-                // Listen for window resize
-                window.addEventListener('resize', () => this.updateHeight());
-                
-                // Handle orientation change on mobile
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => this.updateHeight(), 100);
-                });
-            }
-
-            setupResizeObserver() {
-                if (typeof ResizeObserver === 'undefined') {
-                    // Fallback for browsers without ResizeObserver
-                    setInterval(() => this.updateHeight(), 500);
-                    return;
-                }
-
-                this.resizeObserver = new ResizeObserver(() => {
-                    this.updateHeight();
-                });
-
-                // Observe document body and main content areas
-                this.resizeObserver.observe(document.body);
-                
-                const container = document.querySelector('.container');
-                if (container) this.resizeObserver.observe(container);
-                
-                const heroSection = document.querySelector('.hero-section');
-                if (heroSection) this.resizeObserver.observe(heroSection);
-            }
-
-            updateHeight() {
-                if (!this.isInIframe) return;
-
-                // Get sections that are actually visible
-                const heroSection = document.querySelector('.hero-section');
-                const educationalContent = document.querySelector('.educational-content');
-                const resultsSection = document.querySelector('.results-section');
-                
-                let totalHeight = 0;
-                
-                // Calculate only visible content height
-                if (heroSection) {
-                    const heroHeight = Math.min(heroSection.offsetHeight, 600); // Cap hero at 600px
-                    totalHeight += heroHeight;
-                    console.log(`Hero section height: ${heroHeight}px`);
-                }
-                
-                if (educationalContent && !educationalContent.classList.contains('hidden')) {
-                    const eduHeight = Math.min(educationalContent.offsetHeight, 800); // Cap educational at 800px
-                    totalHeight += eduHeight;
-                    console.log(`Educational content height: ${eduHeight}px`);
-                }
-                
-                if (resultsSection && resultsSection.classList.contains('show')) {
-                    const resultsHeight = Math.min(resultsSection.offsetHeight, 600); // Cap results at 600px
-                    totalHeight += resultsHeight;
-                    console.log(`Results section height: ${resultsHeight}px`);
-                }
-                
-                // Add reasonable padding
-                totalHeight += 40;
-                
-                // Apply strict bounds for GHL iframe
-                const newHeight = Math.max(
-                    Math.min(totalHeight, 900), // Absolute maximum 900px
-                    450 // Minimum 450px
+        // Simple and robust height sender for GHL iframes
+        (function() {
+            function sendHeight() {
+                var h = Math.max(
+                    document.documentElement.scrollHeight,
+                    document.body.scrollHeight,
+                    document.documentElement.offsetHeight,
+                    document.body.offsetHeight
                 );
                 
-                console.log(`📊 Height calculation: total=${totalHeight}px, final=${newHeight}px`);
+                console.log('📏 Sending height to parent:', h + 'px');
                 
-                // Only update if height changed significantly (avoid infinite loops)
-                if (Math.abs(newHeight - this.lastHeight) > 30) {
-                    this.lastHeight = newHeight;
-                    
-                    // Send height to parent window (GHL funnel)
-                    this.sendHeightToParent(newHeight);
-                    
-                    console.log(`📏 Updated iframe height: ${newHeight}px (was: ${this.lastHeight}px)`);
-                }
-            }
-
-            sendHeightToParent(height) {
+                // Post height to the parent with multiple message formats
                 try {
-                    // Multiple message formats for compatibility
-                    const messages = [
-                        // Standard iframe resizing message
-                        { type: 'resize', height: height },
-                        
-                        // GHL-specific message format
-                        { action: 'resize_iframe', height: height },
-                        
-                        // Generic height message
-                        { iframe_height: height },
-                        
-                        // Legacy format
-                        height
-                    ];
-
-                    messages.forEach(message => {
-                        window.parent.postMessage(message, '*');
-                    });
-                    
-                    // Also try the older method
-                    if (window.parent.resizeIframe) {
-                        window.parent.resizeIframe(height);
-                    }
-                    
+                    window.parent.postMessage({ type: 'eesystem-iframe-height', height: h }, '*');
+                    window.parent.postMessage({ height: h }, '*');
+                    window.parent.postMessage(h, '*');
                 } catch (error) {
                     console.log('Could not send height to parent:', error.message);
                 }
             }
 
-            // Method to trigger height update from external code
-            triggerUpdate() {
-                setTimeout(() => this.updateHeight(), 100);
-            }
-        }
+            // Initial + on changes
+            window.addEventListener('load', sendHeight);
+            window.addEventListener('resize', sendHeight);
 
-        // Initialize iframe height manager
-        const iframeManager = new IframeHeightManager();
-        
-        // Make it globally available
-        window.iframeManager = iframeManager;
+            // Watch DOM changes (content expands after data loads, accordions, etc.)
+            if (typeof ResizeObserver !== 'undefined') {
+                var ro = new ResizeObserver(sendHeight);
+                ro.observe(document.body);
+            }
+
+            // If you load async content, poll briefly for dynamic changes
+            var i = 0, t = setInterval(function() {
+                sendHeight();
+                if (++i > 20) clearInterval(t); // ~2s
+            }, 100);
+
+            // Make sendHeight available globally for manual triggering
+            window.sendHeight = sendHeight;
+        })();
 
         class EnhancedEESystemFinder {
             constructor() {
