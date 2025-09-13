@@ -77,6 +77,176 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
+        /* Primary CTA Section */
+        .primary-cta {
+            margin-bottom: 40px;
+        }
+
+        .cta-text {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .cta-subtext {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
+            margin-bottom: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .primary-location-button {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            padding: 20px 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+            backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .primary-location-button:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(34, 197, 94, 0.4);
+        }
+
+        .primary-location-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Secondary Search */
+        .secondary-search {
+            margin-top: 30px;
+        }
+
+        .search-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* Educational Content Section */
+        .educational-content {
+            display: block;
+            background: white;
+            border-radius: 20px;
+            margin: 40px auto;
+            padding: 50px;
+            max-width: 1000px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+
+        .educational-content.hidden {
+            display: none;
+        }
+
+        .edu-section {
+            margin-bottom: 40px;
+        }
+
+        .edu-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .edu-subtitle {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 16px;
+        }
+
+        .edu-text {
+            font-size: 1.1rem;
+            color: #4a5568;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin: 30px 0;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .benefit-title {
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .benefit-text {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 30px 0;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
         /* Master Search Section */
         .master-search {
             max-width: 600px;
@@ -656,30 +826,91 @@
     <!-- Hero Section -->
     <div class="hero-section">
 
-        <h1 class="main-title">Let's Find Your Closest<br>EESystem Center</h1>
-        <p class="subtitle">We'll show nearby centres automatically based on your area.</p>
-        <p class="privacy-text">Privacy: we don't save your location. Matching happens in your browser.</p>
+        <h1 class="main-title">Find Your Nearest<br>EESystem Center</h1>
+        <p class="subtitle">Discover the power of revolutionary Energy Enhancement technology</p>
+        <p class="privacy-text">Privacy: Your location stays private - matching happens in your browser</p>
 
-        <!-- Master Search -->
-        <div class="master-search">
-            <div class="search-container">
-                <div class="search-input-group">
-                    <input type="text" id="masterSearchInput" class="master-search-input" 
-                           placeholder="Search by city, postcode, zip, or address worldwide...">
-                    <button id="masterSearchBtn" class="search-btn">Search</button>
+        <!-- Primary CTA -->
+        <div class="primary-cta">
+            <p class="cta-text">Ready to experience enhanced wellness and vitality?</p>
+            <p class="cta-subtext">Click below to find centers near you</p>
+            <button id="useLocationBtn" class="primary-location-button">
+                🎯 Find My Nearest Center
+            </button>
+        </div>
+
+        <!-- Secondary Manual Search -->
+        <div class="secondary-search">
+            <p class="search-label">Or search manually:</p>
+            <div class="master-search">
+                <div class="search-container">
+                    <div class="search-input-group">
+                        <input type="text" id="masterSearchInput" class="master-search-input" 
+                               placeholder="Search by city, postcode, zip, or address worldwide...">
+                        <button id="masterSearchBtn" class="search-btn">Search</button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Use My Location Button -->
-        <button id="useLocationBtn" class="location-button">
-            📍 Use My Location
-        </button>
 
         <!-- Toggle Advanced Search -->
         <button id="toggleAdvanced" class="toggle-advanced">
             ⚙️ Advanced Filters
         </button>
+    </div>
+
+    <!-- Educational Content Section -->
+    <div id="educationalContent" class="educational-content">
+        <div class="edu-section">
+            <h2 class="edu-title">Experience the Future of Wellness</h2>
+            
+            <div class="edu-subtitle">What is EESystem?</div>
+            <p class="edu-text">
+                Energy Enhancement System (EESystem) is revolutionary scalar wave technology that creates an optimal environment for cellular regeneration and healing. This groundbreaking system generates scalar energy fields that help your body return to its natural state of health and vitality.
+            </p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <div class="benefit-title">Cellular Optimization</div>
+                    <div class="benefit-text">Enhance cellular energy production and regeneration at the mitochondrial level</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🧘</div>
+                    <div class="benefit-title">Stress Relief</div>
+                    <div class="benefit-text">Experience deep relaxation and mental clarity in a healing environment</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">💪</div>
+                    <div class="benefit-title">Enhanced Vitality</div>
+                    <div class="benefit-text">Boost energy levels, improve sleep quality, and enhance overall well-being</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔬</div>
+                    <div class="benefit-title">Scientific Foundation</div>
+                    <div class="benefit-text">Research-backed technology with measurable results and peer-reviewed studies</div>
+                </div>
+            </div>
+            
+            <div class="edu-subtitle">What to Expect</div>
+            <p class="edu-text">
+                EESystem sessions typically last 2+ hours in a comfortable, relaxing environment. Many users experience immediate benefits including improved energy, mental clarity, and a sense of well-being. Sessions are non-invasive - simply relax in a specialized room equipped with EESystem technology.
+            </p>
+            
+            <div class="edu-subtitle">Why Choose EESystem?</div>
+            <p class="edu-text">
+                Unlike traditional wellness approaches, EESystem works at the quantum level to optimize your body's natural healing processes. Thousands of users worldwide have reported transformational results including improved health markers, enhanced mental clarity, and accelerated recovery.
+            </p>
+            
+            <div class="cta-buttons">
+                <button class="cta-button" onclick="document.getElementById('useLocationBtn').click()">
+                    🎯 Find My Nearest Center
+                </button>
+                <button class="cta-button" onclick="document.getElementById('masterSearchInput').focus()">
+                    🔍 Search by Location
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Advanced Search (Hidden by default) -->
@@ -871,7 +1102,7 @@
                 this.initializeElements();
                 this.bindEvents();
                 this.loadCountries();
-                this.autoDetectLocation();
+                // Removed autoDetectLocation() - no automatic detection on page load
             }
 
             initializeElements() {
@@ -1170,8 +1401,12 @@
             displayResults() {
                 if (this.filteredLocations.length === 0) {
                     this.showEmptyResults();
+                    this.showEducationalContent();
                     return;
                 }
+
+                // Hide educational content when showing results
+                this.hideEducationalContent();
 
                 const grid = document.createElement('div');
                 grid.className = 'locations-grid';
@@ -1187,6 +1422,28 @@
                 // Update iframe height after content changes
                 if (window.iframeManager) {
                     window.iframeManager.triggerUpdate();
+                }
+            }
+
+            hideEducationalContent() {
+                const educationalContent = document.getElementById('educationalContent');
+                if (educationalContent) {
+                    educationalContent.classList.add('hidden');
+                    // Trigger iframe height update
+                    if (window.iframeManager) {
+                        window.iframeManager.triggerUpdate();
+                    }
+                }
+            }
+
+            showEducationalContent() {
+                const educationalContent = document.getElementById('educationalContent');
+                if (educationalContent) {
+                    educationalContent.classList.remove('hidden');
+                    // Trigger iframe height update
+                    if (window.iframeManager) {
+                        window.iframeManager.triggerUpdate();
+                    }
                 }
             }
 
