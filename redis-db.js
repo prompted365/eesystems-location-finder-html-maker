@@ -6,7 +6,7 @@ class DatabaseManager {
   constructor() {
     this.client = null;
     this.useLocalDB = process.env.USE_LOCAL_DB === 'true' || !process.env.REDIS_URL;
-    this.dbPath = path.join(__dirname, 'database.json');
+    this.dbPath = path.join(__dirname, 'data', 'locations.json');
   }
 
   async connect() {

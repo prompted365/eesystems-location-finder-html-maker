@@ -38,6 +38,19 @@ A sophisticated web application that processes CSV files containing EESystem cen
    - Copy to clipboard or download the generated location finder
    - Deploy anywhere for fast, responsive location finding
 
+## 🧹 CSV QA Script
+
+Before committing updated location data, run the quality assurance script to
+trim fields, validate URLs and regenerate the canonical JSON database:
+
+```bash
+node scripts/qa-csv.js
+```
+
+The script writes the cleaned results to `data/locations.json`. The legacy
+`database.json` file now lives under `deprecated/data/` for historical
+reference.
+
 ## 🧪 Testing & TDD
 
 This project uses a test-driven development workflow. Write failing tests first in the appropriate layer and then implement your feature.
@@ -121,7 +134,7 @@ The admin dashboards are disabled by default and not served in production. To en
 
 - `src/app.js` - Application entry point
 - `template.html` - Base template for generated HTML
-- `locations_db.json` - Local database (created automatically)
+- `data/locations.json` - Canonical location database
 
 ## 🎯 Perfect for
 

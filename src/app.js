@@ -52,7 +52,7 @@ try {
       store = new RedisStore();
       break;
     default:
-      store = require('../database.json');
+      store = require('../data/locations.json');
   }
 } catch (err) {
   logger.warn(`Failed to load data store "${runtime.dataStore}": ${err.message}`);
@@ -66,12 +66,14 @@ function formatLocation(location) {
   return {
     id: location.id,
     name: location.name,
-    address: location.address,
-    bookingUrl: location.bookingUrl,
-    googleMapsLink: location.googleMapsLink,
-    latitude: parseFloat(location.latitude),
-    longitude: parseFloat(location.longitude),
-    country: location.country
+    address: [location.street, location.city, location.region, location.postal]
+      .filter(Boolean)
+      .join(', '),
+    bookingUrl: location.booking_url,
+    googleMapsLink: location.map_url,
+    latitude: location.lat != null ? parseFloat(location.lat) : null,
+    longitude: location.lng != null ? parseFloat(location.lng) : null,
+    country: location.country_code
   };
 }
 
@@ -81,8 +83,11 @@ app.get('/api/locations/search', validate(schemas.search), (req, res) => {
   const locations = (store?.locations || [])
     .filter(loc => {
       const name = (loc.name || '').toLowerCase();
-      const address = (loc.address || '').toLowerCase();
-      const country = (loc.country || '').toLowerCase();
+      const address = [loc.street, loc.city, loc.region, loc.postal]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      const country = (loc.country_code || '').toLowerCase();
       return name.includes(query) || address.includes(query) || country.includes(query);
     })
     .slice(0, limit)
@@ -93,9 +98,9 @@ app.get('/api/locations/search', validate(schemas.search), (req, res) => {
 app.get('/api/locations/nearest', validate(schemas.nearest), (req, res) => {
   const { lat, lng, limit } = req.validated;
   const results = (store?.locations || [])
-    .filter(loc => loc.latitude && loc.longitude)
+    .filter(loc => loc.lat != null && loc.lng != null)
     .map(loc => {
-      const distance = haversine(lat, lng, parseFloat(loc.latitude), parseFloat(loc.longitude));
+      const distance = haversine(lat, lng, parseFloat(loc.lat), parseFloat(loc.lng));
       return { ...formatLocation(loc), distance };
     })
     .sort((a, b) => a.distance - b.distance)
@@ -105,9 +110,16 @@ app.get('/api/locations/nearest', validate(schemas.nearest), (req, res) => {
 
 app.get('/api/locations/by-location', validate(schemas.byLocation), (req, res) => {
   const { country, city } = req.validated;
-  let results = (store?.locations || []).filter(loc => (loc.country || '').toLowerCase() === country.toLowerCase());
+  let results = (store?.locations || []).filter(
+    loc => (loc.country_code || '').toLowerCase() === country.toLowerCase()
+  );
   if (city) {
-    results = results.filter(loc => (loc.address || '').toLowerCase().includes(city.toLowerCase()));
+    results = results.filter(loc =>
+      [loc.city, loc.street, loc.region]
+        .filter(Boolean)
+        .map(v => v.toLowerCase())
+        .some(v => v.includes(city.toLowerCase()))
+    );
   }
   results = results.map(formatLocation);
   res.json({ ok: true, data: results, meta: { total: results.length, filters: { country, city } } });

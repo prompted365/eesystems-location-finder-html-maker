@@ -6,7 +6,7 @@ class DatabaseManager {
   constructor() {
     this.pool = null;
     this.useLocalDB = process.env.USE_LOCAL_DB === 'true' || !process.env.DATABASE_URL;
-    this.dbPath = path.join(__dirname, 'database.json');
+    this.dbPath = path.join(__dirname, 'data', 'locations.json');
   }
 
   async connect() {
@@ -100,17 +100,23 @@ class DatabaseManager {
               [
                 location.id,
                 location.name,
-                location.address,
-                location.cleanAddress || location.address,
-                location.originalAddress || location.address,
-                location.latitude,
-                location.longitude,
-                location.bookingUrl,
-                location.googleMapsLink,
-                location.dataQuality || 'good',
-                JSON.stringify(location.issues || []),
-                location.processed ? new Date(location.processed) : new Date(),
-                location.country
+                [location.street, location.city, location.region, location.postal]
+                  .filter(Boolean)
+                  .join(', '),
+                [location.street, location.city, location.region, location.postal]
+                  .filter(Boolean)
+                  .join(', '),
+                [location.street, location.city, location.region, location.postal]
+                  .filter(Boolean)
+                  .join(', '),
+                location.lat,
+                location.lng,
+                location.booking_url,
+                location.map_url,
+                'good',
+                JSON.stringify([]),
+                new Date(),
+                location.country_code
               ]
             );
           }
@@ -213,17 +219,23 @@ class DatabaseManager {
           [
             location.id,
             location.name,
-            location.address,
-            location.cleanAddress || location.address,
-            location.originalAddress || location.address,
-            location.latitude,
-            location.longitude,
-            location.bookingUrl,
-            location.googleMapsLink,
-            location.dataQuality || 'good',
-            JSON.stringify(location.issues || []),
-            location.processed ? new Date(location.processed) : new Date(),
-            location.country
+            [location.street, location.city, location.region, location.postal]
+              .filter(Boolean)
+              .join(', '),
+            [location.street, location.city, location.region, location.postal]
+              .filter(Boolean)
+              .join(', '),
+            [location.street, location.city, location.region, location.postal]
+              .filter(Boolean)
+              .join(', '),
+            location.lat,
+            location.lng,
+            location.booking_url,
+            location.map_url,
+            'good',
+            JSON.stringify([]),
+            new Date(),
+            location.country_code
           ]
         );
         
