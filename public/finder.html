@@ -662,8 +662,8 @@
             <path d="M335 50 L345 35 L355 50 L365 35" stroke="url(#logoGradient)" stroke-width="2" fill="none"/>
         </svg>
 
-        <h1 class="main-title">Find A Public System</h1>
-        <p class="subtitle">Search The Global Map Of EESystem Centers</p>
+        <h1 class="main-title">Let's Find Your Closest EESystem Center</h1>
+        <p class="subtitle">We'll show nearby centres automatically based on your area.<br>Privacy: we don't save your location. Matching happens in your browser.</p>
 
         <!-- Master Search -->
         <div class="master-search">
@@ -685,13 +685,6 @@
         <button id="toggleAdvanced" class="toggle-advanced">
             ⚙️ Advanced Filters
         </button>
-
-        <!-- Status Indicators -->
-        <div class="status-indicators">
-            <div class="status-indicator status-open">OPEN 48-unit</div>
-            <div class="status-indicator status-limited">12 to 40-unit</div>
-            <div class="status-indicator status-coming">Coming Soon</div>
-        </div>
     </div>
 
     <!-- Advanced Search (Hidden by default) -->
@@ -735,13 +728,6 @@
                 <p class="results-subtitle" id="resultsSubtitle">Use search above to find centers near you</p>
             </div>
 
-            <!-- Filter Tabs -->
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-filter="all">All Centers</button>
-                <button class="filter-tab" data-filter="48unit">48-Unit Systems</button>
-                <button class="filter-tab" data-filter="limited">12-40 Unit Systems</button>
-                <button class="filter-tab" data-filter="coming">Coming Soon</button>
-            </div>
 
             <!-- Loading State -->
             <div id="loading" class="loading">
@@ -828,7 +814,7 @@
 
             async autoDetectLocation() {
                 try {
-                    this.showStatus('Detecting your location...', 'info');
+                    this.showStatus('Finding centers near you...', 'info');
                     const response = await fetch('/api/locations/ip-location');
                     const data = await response.json();
 
@@ -836,19 +822,67 @@
                         this.userLocation = data.location;
                         console.log('IP location detected:', this.userLocation);
                         
-                        // Load nearest centers automatically
-                        await this.loadNearestCenters();
-                        
-                        this.showStatus(`Location detected: ${this.userLocation.city}, ${this.userLocation.country}`, 'success');
+                        // Progressive location detection strategy
+                        if (this.userLocation.city && this.userLocation.lat && this.userLocation.lng) {
+                            // Strategy 1: City-level coordinates found - show nearest centers
+                            console.log('City-level location detected, showing nearest centers');
+                            await this.loadNearestCenters();
+                            this.showStatus(`Showing centers near ${this.userLocation.city}, ${this.userLocation.country}`, 'success');
+                        } else if (this.userLocation.country) {
+                            // Strategy 2: Only country-level data - show centers in that country
+                            console.log('Country-level location detected, showing country centers');
+                            await this.loadCountryCenters(this.userLocation.country);
+                            this.showStatus(`Showing centers in ${this.userLocation.country}`, 'success');
+                        } else {
+                            // Strategy 3: Minimal location data - show search interface
+                            console.log('Minimal location data, showing search interface');
+                            this.showSearchInterface();
+                        }
                         
                         // Auto-populate country dropdown when loaded
                         this.autoPopulateCountry = true;
                     } else {
-                        this.showStatus('Click "Use My Location" for precise location or search above', 'info');
+                        // Strategy 3: No location data - show search interface
+                        this.showSearchInterface();
                     }
                 } catch (error) {
                     console.error('IP location error:', error);
-                    this.showStatus('Click "Use My Location" for precise location or search above', 'info');
+                    this.showSearchInterface();
+                }
+            }
+
+            showSearchInterface() {
+                this.updateResultsHeader('EESystem Centers Worldwide', 'Search above or click "Use My Location" to find centers near you');
+                this.showStatus('Search for your location above or click "Use My Location" for precise results', 'info');
+            }
+
+            async loadCountryCenters(country) {
+                try {
+                    this.showLoading('Loading centers in your country...');
+                    
+                    const response = await fetch(`/api/locations/by-location?country=${encodeURIComponent(country)}&limit=50`);
+                    const data = await response.json();
+
+                    this.hideLoading();
+                    
+                    if (data.success && data.locations) {
+                        this.allLocations = this.enhanceLocationData(data.locations);
+                        this.applyCurrentFilter();
+                        
+                        this.updateResultsHeader(`Centers in ${country}`, `${this.allLocations.length} centers found`);
+                        
+                        if (this.allLocations.length === 0) {
+                            this.showEmptyResults();
+                            this.showStatus(`No centers found in ${country}. Try searching for a specific city.`, 'info');
+                        }
+                    } else {
+                        this.showEmptyResults();
+                        this.showStatus(`No centers found in ${country}. Try searching for a specific city.`, 'info');
+                    }
+                } catch (error) {
+                    this.hideLoading();
+                    console.error('Error loading country centers:', error);
+                    this.showStatus('Error loading centers. Please try searching manually.', 'error');
                 }
             }
 
@@ -985,17 +1019,6 @@
 
             enhanceLocationData(locations) {
                 return locations.map(location => {
-                    // Determine center type/status based on name or other criteria
-                    let status = 'limited'; // default
-                    let statusText = '12-40 Unit';
-                    
-                    // You can enhance this logic based on actual data
-                    if (location.name.toLowerCase().includes('wellness') || 
-                        location.name.toLowerCase().includes('center')) {
-                        status = '48unit';
-                        statusText = '48-Unit System';
-                    }
-                    
                     // Add distance formatting
                     if (location.distance !== undefined) {
                         location.distanceFormatted = location.distance < 1 ? 
@@ -1004,10 +1027,7 @@
                     }
                     
                     return {
-                        ...location,
-                        status,
-                        statusText,
-                        centerType: status
+                        ...location
                     };
                 });
             }
@@ -1054,16 +1074,9 @@
             createLocationCard(location) {
                 const card = document.createElement('div');
                 card.className = 'location-card';
-
-                const statusClass = `status-${location.status}`;
                 
                 card.innerHTML = `
-                    <div class="location-header">
-                        <div>
-                            <h3 class="location-name">${this.escapeHtml(location.name)}</h3>
-                        </div>
-                        <div class="location-status ${statusClass}">${location.statusText}</div>
-                    </div>
+                    <h3 class="location-name">${this.escapeHtml(location.name)}</h3>
                     <p class="location-address">${this.escapeHtml(location.address)}</p>
                     ${location.distanceFormatted ? `
                         <p class="location-distance">📍 ${location.distanceFormatted} away</p>
