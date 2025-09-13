@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EESystem™ Location Finder - Find Energy Enhancement Centers Near You</title>
+    <title>Find A Public System | Energy Enhancement System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    
     <style>
         * {
             margin: 0;
@@ -17,236 +22,334 @@
         body {
             font-family: 'Open Sans', sans-serif;
             background: #ffffff;
-            min-height: 100vh;
-            color: #2c3e50;
+            color: #333;
             line-height: 1.6;
         }
 
-        /* Header Section */
-        .header-section {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 3rem 0;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        /* Header Navigation */
+        .header-nav {
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .logo-container {
-            margin-bottom: 2rem;
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
         }
 
         .logo-text {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 3rem;
-            font-weight: 800;
-            color: #FFD700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+            font-size: 18px;
         }
 
-        .tagline {
-            color: #ffffff;
-            font-size: 1.2rem;
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: #666;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+        }
+
+        .nav-link.active {
+            color: #f39c12;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 20px 60px;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
             font-weight: 300;
             opacity: 0.9;
         }
 
-        /* Main Container */
-        .main-container {
-            max-width: 1200px;
+        /* Main Content Area */
+        .main-content {
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 40px 20px;
         }
 
-        /* Introduction Section */
-        .intro-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border-left: 4px solid #FFD700;
-        }
-
-        .intro-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 1rem;
-        }
-
-        .intro-text {
-            color: #5a6c7d;
-            font-size: 1.1rem;
-            line-height: 1.8;
-        }
-
-        /* Search Section */
-        .search-container {
-            background: white;
-            border-radius: 15px;
-            padding: 2.5rem;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            margin-bottom: 2rem;
-        }
-
-        .search-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 1.5rem;
+        .section-header {
             text-align: center;
+            margin-bottom: 40px;
         }
 
-        .search-form {
+        .section-title {
+            font-size: 2.2rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section-subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-pin {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .stat-pin.open { background: #e67e22; }
+        .stat-pin.large-open { background: #f39c12; }
+        .stat-pin.small-open { background: #d35400; }
+        .stat-pin.coming-soon { background: #95a5a6; }
+
+        .stat-text {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Layout Container */
+        .finder-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+            min-height: 600px;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .search-section {
+            margin-bottom: 25px;
         }
 
         .search-input {
-            flex: 1;
-            padding: 1rem 1.5rem;
+            width: 100%;
+            padding: 12px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 50px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            font-family: 'Open Sans', sans-serif;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: #FFD700;
-            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+            border-color: #667eea;
         }
 
-        .search-btn {
-            padding: 1rem 2rem;
-            background: #FFD700;
-            color: #1a1a2e;
-            border: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Montserrat', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .search-btn:hover {
-            background: #FFC700;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .divider-text {
-            text-align: center;
-            color: #8e9eab;
-            margin: 1.5rem 0;
-            position: relative;
-        }
-
-        .divider-text::before,
-        .divider-text::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: #e0e0e0;
-        }
-
-        .divider-text::before {
-            left: 0;
-        }
-
-        .divider-text::after {
-            right: 0;
-        }
-
-        .divider-text span {
-            background: white;
-            padding: 0 1rem;
-            position: relative;
-        }
-
-        .locate-btn {
+        .search-button {
             width: 100%;
-            padding: 1.2rem 2rem;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px;
+            background: #e67e22;
             color: white;
             border: none;
-            border-radius: 50px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
-            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 15px;
+            transition: background 0.3s ease;
+        }
+
+        .search-button:hover {
+            background: #d35400;
+        }
+
+        .locate-button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .locate-button:hover {
+            background: #5a6fd8;
+        }
+
+        /* Results List */
+        .results-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-family: 'Montserrat', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
-        .locate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        .result-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #667eea;
         }
 
-        /* Status Messages */
-        .status-message {
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            display: none;
-            animation: slideIn 0.3s ease;
+        .result-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .result-address {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
         }
 
-        .status-message.info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-left: 4px solid #1565c0;
+        .result-distance {
+            color: #e67e22;
+            font-weight: 600;
+            font-size: 14px;
         }
 
-        .status-message.error {
-            background: #ffebee;
-            color: #c62828;
-            border-left: 4px solid #c62828;
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
         }
 
-        .status-message.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 4px solid #2e7d32;
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        /* Loading Spinner */
+        .btn-book {
+            background: #e67e22;
+            color: white;
+        }
+
+        .btn-book:hover {
+            background: #d35400;
+        }
+
+        .btn-directions {
+            background: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .btn-directions:hover {
+            background: #d5dbdb;
+        }
+
+        /* Map Container */
+        .map-container {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            width: 100%;
+            height: 600px;
+        }
+
+        /* Loading and Status */
         .loading {
             display: none;
             text-align: center;
-            padding: 3rem;
+            padding: 20px;
         }
 
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #FFD700;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 1.5rem;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -254,410 +357,232 @@
             100% { transform: rotate(360deg); }
         }
 
-        .loading-text {
-            color: #5a6c7d;
-            font-size: 1.1rem;
-        }
-
-        /* Results Section */
-        .results-section {
+        .status-message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
             display: none;
-            margin-top: 3rem;
         }
 
-        .results-header {
-            text-align: center;
-            margin-bottom: 2rem;
+        .status-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
         }
 
-        .results-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 0.5rem;
+        .status-error {
+            background: #ffebee;
+            color: #d32f2f;
+            border-left: 4px solid #d32f2f;
         }
 
-        .results-subtitle {
-            color: #5a6c7d;
-            font-size: 1.1rem;
-        }
-
-        /* Location Cards */
-        .locations-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .location-card {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            border: 1px solid #f0f0f0;
-        }
-
-        .location-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-        }
-
-        .location-card-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            padding: 1.5rem;
-            position: relative;
-        }
-
-        .location-name {
-            color: #FFD700;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .location-distance {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #FFD700;
-            color: #1a1a2e;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .location-card-body {
-            padding: 1.5rem;
-        }
-
-        .location-address {
-            color: #5a6c7d;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .location-country {
-            color: #8e9eab;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .location-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .action-btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 0.8rem 1rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            text-align: center;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .btn-book {
-            background: #FFD700;
-            color: #1a1a2e;
-        }
-
-        .btn-book:hover {
-            background: #FFC700;
-            transform: translateY(-2px);
-        }
-
-        .btn-directions {
-            background: #f0f0f0;
-            color: #2c3e50;
-        }
-
-        .btn-directions:hover {
-            background: #e0e0e0;
-        }
-
-        /* Info Sections */
-        .info-sections {
-            margin-top: 4rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .info-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 2rem;
-            border-top: 4px solid #FFD700;
-        }
-
-        .info-card h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 1rem;
-        }
-
-        .info-card p, .info-card li {
-            color: #5a6c7d;
-            line-height: 1.8;
-            margin-bottom: 0.8rem;
-        }
-
-        .info-card ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .info-card li::before {
-            content: "✓ ";
-            color: #FFD700;
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 4rem;
-            padding: 2rem;
-            background: #f8f9fa;
-            text-align: center;
-            border-top: 1px solid #e0e0e0;
-        }
-
-        .footer-text {
-            color: #8e9eab;
-            font-size: 0.9rem;
-        }
-
-        .footer-link {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .footer-link:hover {
-            text-decoration: underline;
-        }
-
-        /* No Results */
-        .no-results {
-            text-align: center;
-            padding: 3rem;
-            background: #f8f9fa;
-            border-radius: 15px;
-            margin: 2rem 0;
-        }
-
-        .no-results h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.5rem;
-            color: #1a1a2e;
-            margin-bottom: 1rem;
-        }
-
-        .no-results p {
-            color: #5a6c7d;
-            font-size: 1.1rem;
-        }
-
-        /* Responsive Design */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .logo-text {
+            .nav-menu {
+                display: none;
+            }
+            
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .finder-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats-section {
+                gap: 20px;
+            }
+
+            #map {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
                 font-size: 2rem;
             }
-
-            .main-container {
-                padding: 1rem;
+            
+            .section-title {
+                font-size: 1.8rem;
             }
 
-            .search-form {
-                flex-direction: column;
-            }
-
-            .search-btn {
-                width: 100%;
-            }
-
-            .locations-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .info-sections {
-                grid-template-columns: 1fr;
-            }
-
-            .location-actions {
-                flex-direction: column;
-            }
-
-            .action-btn {
-                width: 100%;
+            .nav-container {
+                padding: 0 15px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="header-section">
-        <div class="logo-container">
-            <div class="logo-text">EESystem™</div>
-            <div class="tagline">Energy Enhancement System Location Finder</div>
+    <!-- Header Navigation -->
+    <header class="header-nav">
+        <div class="nav-container">
+            <div class="logo-section">
+                <div class="logo-icon">EE</div>
+                <div class="logo-text">ENERGY ENHANCEMENT SYSTEM</div>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">About</a>
+                <a href="#" class="nav-link">Systems</a>
+                <a href="#" class="nav-link active">Find A Center</a>
+                <a href="#" class="nav-link">Shop</a>
+                <a href="#" class="nav-link">Media</a>
+                <a href="#" class="nav-link">Contact</a>
+            </nav>
         </div>
     </header>
 
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <h1 class="hero-title">FIND A PUBLIC<br><span style="font-size: 4rem; font-weight: 300; letter-spacing: 8px;">SYSTEM</span></h1>
+        <p class="hero-subtitle">Discover Energy Enhancement Centers Near You</p>
+    </section>
+
     <!-- Main Content -->
-    <div class="main-container">
-        <!-- Introduction -->
-        <section class="intro-section">
-            <h2 class="intro-title">Find Your Nearest EESystem Center</h2>
-            <p class="intro-text">
-                The Energy Enhancement System combines body, mind, spirit, and science to help you achieve peak performance 
-                and reach higher states of health, consciousness, and self-actualization. Use our location finder to discover 
-                the nearest EESystem center and begin your journey to enhanced wellbeing.
-            </p>
-        </section>
+    <div class="main-content">
+        <div class="section-header">
+            <h2 class="section-title">SEARCH THE GLOBAL MAP OF<br>EESYSTEM CENTERS</h2>
+            <p class="section-subtitle">Find the perfect center for your wellness journey</p>
+        </div>
 
-        <!-- Search Section -->
-        <section class="search-container">
-            <h3 class="search-title">Search for Centers Near You</h3>
-            
-            <div class="search-form">
-                <input type="text" 
-                       class="search-input" 
-                       id="locationInput" 
-                       placeholder="Enter any city, postal code, or address worldwide (e.g., Paris, 90210, M1 1AA, Sydney)">
-                <button class="search-btn" id="searchBtn">Search</button>
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stat-item">
+                <div class="stat-pin open">📍</div>
+                <div class="stat-text">OPEN<br>48+ unit +</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-pin large-open">📍</div>
+                <div class="stat-text">OPEN<br>12 to 40+ unit</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-pin small-open">📍</div>
+                <div class="stat-text">OPEN<br>+ 12 unit</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-pin coming-soon">📍</div>
+                <div class="stat-text">COMING<br>SOON</div>
+            </div>
+        </div>
+
+        <!-- Finder Container -->
+        <div class="finder-container">
+            <!-- Left Sidebar -->
+            <div class="sidebar">
+                <div class="search-section">
+                    <h3 style="margin-bottom: 15px; color: #2c3e50;">Enter a Location</h3>
+                    <input type="text" id="searchInput" class="search-input" 
+                           placeholder="City, state, or postal code...">
+                    <button id="searchBtn" class="search-button">🔍 Search</button>
+                    <button id="locateBtn" class="locate-button">📍 Use My Location</button>
+                    
+                    <div id="statusMessage" class="status-message"></div>
+                    <div id="loading" class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Finding centers...</p>
+                    </div>
+                </div>
+
+                <!-- Results List -->
+                <div class="results-list" id="resultsList">
+                    <p style="color: #666; text-align: center; padding: 20px;">
+                        Search for a location to see nearby EESystem centers
+                    </p>
+                </div>
             </div>
 
-            <div class="divider-text">
-                <span>OR</span>
-            </div>
-
-            <button class="locate-btn" id="locateBtn">
-                📍 Use My Current Location
-            </button>
-
-            <div class="status-message" id="statusMessage"></div>
-            
-            <div class="loading" id="loading">
-                <div class="loading-spinner"></div>
-                <p class="loading-text">Finding EESystem centers near you...</p>
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section class="results-section" id="resultsSection">
-            <div class="results-header">
-                <h2 class="results-title" id="resultsTitle">Nearest EESystem™ Centers</h2>
-                <p class="results-subtitle" id="resultsSubtitle"></p>
-            </div>
-            <div class="locations-grid" id="locationsList"></div>
-            <div class="no-results" id="noResults" style="display: none;">
-                <h3>No Centers Found</h3>
-                <p>We couldn't find any EESystem centers in your area. Try searching for a different location or check back later as new centers are being added regularly.</p>
-            </div>
-        </section>
-
-        <!-- Information Sections -->
-        <div class="info-sections">
-            <div class="info-card">
-                <h3>What is EESystem?</h3>
-                <p>
-                    The Energy Enhancement System generates multiple bio-active life enhancing energy fields, 
-                    including "scalar waves" which can allow cell regeneration, improve immune function, 
-                    provide relief from pain, detoxify the body, elevate moods, and assist in balancing 
-                    right and left hemispheres of the brain to increase energy levels.
-                </p>
-            </div>
-
-            <div class="info-card">
-                <h3>Your Next Steps</h3>
-                <ul>
-                    <li>Find your nearest center using the search above</li>
-                    <li>Click "Book Session" to schedule your appointment</li>
-                    <li>Arrive 15 minutes early for your first session</li>
-                    <li>Wear comfortable clothing</li>
-                    <li>Bring water to stay hydrated</li>
-                    <li>Relax and enjoy your EESystem experience</li>
-                </ul>
-            </div>
-
-            <div class="info-card">
-                <h3>Privacy & Data</h3>
-                <p>
-                    Your location data is used solely to find the nearest EESystem centers. 
-                    We do not store or share your personal location information. 
-                    All searches are processed securely and your privacy is our priority.
-                </p>
-                <p>
-                    For more information about EESystem, visit 
-                    <a href="https://ee-system.com" target="_blank" class="footer-link">ee-system.com</a>
-                </p>
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map"></div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p class="footer-text">
-            © 2025 EESystem™ Location Finder | 
-            <a href="https://ee-system.com" target="_blank" class="footer-link">Official Website</a> | 
-            <a href="https://ee-system.com/privacy" target="_blank" class="footer-link">Privacy Policy</a>
-        </p>
-    </footer>
-
     <script>
-        class EESystemLocationFinder {
+        class EESystemFinder {
             constructor() {
+                this.map = null;
+                this.markers = [];
                 this.userLocation = null;
                 this.initializeElements();
+                this.initializeMap();
                 this.bindEvents();
-                // Don't auto-locate on page load to respect user privacy
+                this.autoDetectLocation();
             }
 
             initializeElements() {
-                this.locationInput = document.getElementById('locationInput');
+                this.searchInput = document.getElementById('searchInput');
                 this.searchBtn = document.getElementById('searchBtn');
                 this.locateBtn = document.getElementById('locateBtn');
                 this.statusMessage = document.getElementById('statusMessage');
                 this.loading = document.getElementById('loading');
-                this.resultsSection = document.getElementById('resultsSection');
-                this.resultsTitle = document.getElementById('resultsTitle');
-                this.resultsSubtitle = document.getElementById('resultsSubtitle');
-                this.locationsList = document.getElementById('locationsList');
-                this.noResults = document.getElementById('noResults');
+                this.resultsList = document.getElementById('resultsList');
+            }
+
+            initializeMap() {
+                // Use a free map service - OpenStreetMap with Mapbox GL JS
+                mapboxgl.accessToken = 'pk.eyJ1IjoiZWVzeXN0ZW0iLCJhIjoiY2x2YjNkdm9nMGlubTJpbjJlNTZjaHY3NyJ9.placeholder'; // You'll need to get a free Mapbox token
+                
+                // Fallback to simple div if no token
+                if (!mapboxgl.accessToken || mapboxgl.accessToken.includes('placeholder')) {
+                    document.getElementById('map').innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8f9fa; color: #666; font-size: 18px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 48px; margin-bottom: 20px;">🗺️</div>
+                                <div>Interactive Map</div>
+                                <div style="font-size: 14px; margin-top: 10px;">Centers will be marked here</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/light-v11',
+                    center: [-98.5795, 39.8283], // Center of US
+                    zoom: 4
+                });
+
+                this.map.addControl(new mapboxgl.NavigationControl());
             }
 
             bindEvents() {
                 this.searchBtn.addEventListener('click', () => this.handleSearch());
                 this.locateBtn.addEventListener('click', () => this.getCurrentLocation());
                 
-                this.locationInput.addEventListener('keypress', (e) => {
+                this.searchInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         this.handleSearch();
                     }
                 });
+            }
 
-                this.locationInput.addEventListener('input', () => {
-                    if (this.statusMessage.style.display !== 'none') {
-                        this.hideStatus();
+            async autoDetectLocation() {
+                try {
+                    this.showLoading('Detecting your location...');
+                    const response = await fetch('/api/locations/ip-location');
+                    const data = await response.json();
+
+                    if (data.success && data.location) {
+                        this.userLocation = {
+                            lat: data.location.lat,
+                            lng: data.location.lng
+                        };
+                        
+                        await this.findNearestLocations(
+                            data.location.lat, 
+                            data.location.lng, 
+                            data.location.city || 'your location'
+                        );
                     }
-                });
+                } catch (error) {
+                    console.error('Auto-location error:', error);
+                    this.hideLoading();
+                }
             }
 
             getCurrentLocation() {
@@ -666,7 +591,7 @@
                     return;
                 }
 
-                this.showLoading('Getting your current location...');
+                this.showLoading('Getting your precise location...');
 
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -674,48 +599,34 @@
                             lat: position.coords.latitude,
                             lng: position.coords.longitude
                         };
-                        this.findNearestLocations(position.coords.latitude, position.coords.longitude, 'your current location');
+                        this.findNearestLocations(
+                            position.coords.latitude, 
+                            position.coords.longitude, 
+                            'your current location'
+                        );
                     },
                     (error) => {
                         this.hideLoading();
-                        let message = 'Unable to get your location. ';
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                message += 'Please allow location access and try again.';
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                message += 'Location information is unavailable.';
-                                break;
-                            case error.TIMEOUT:
-                                message += 'Location request timed out.';
-                                break;
-                        }
-                        this.showStatus(message, 'error');
+                        this.showStatus('Unable to get your location. Please try searching manually.', 'error');
                     },
-                    { 
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 300000
-                    }
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
                 );
             }
 
             async handleSearch() {
-                const query = this.locationInput.value.trim();
+                const query = this.searchInput.value.trim();
                 if (!query) {
                     this.showStatus('Please enter a location to search', 'error');
                     return;
                 }
 
-                this.showLoading('Searching for location...');
+                this.showLoading('Finding location...');
 
                 try {
-                    // First, geocode the input
+                    // Geocode the search query
                     const geocodeResponse = await fetch('/api/locations/geocode', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ address: query })
                     });
 
@@ -728,20 +639,19 @@
                     const { lat, lng, city } = geocodeData.coordinates;
                     this.userLocation = { lat, lng };
                     
-                    // Find nearest locations
                     await this.findNearestLocations(lat, lng, city || query);
 
                 } catch (error) {
                     this.hideLoading();
-                    this.showStatus(`Could not find location. Please try a different search term.`, 'error');
+                    this.showStatus('Could not find that location. Please try a different search.', 'error');
                 }
             }
 
-            async findNearestLocations(lat, lng, locationName = 'your location') {
+            async findNearestLocations(lat, lng, locationName) {
                 try {
-                    this.showLoading('Finding nearest EESystem centers...');
+                    this.showLoading('Finding EESystem centers...');
 
-                    const response = await fetch(`/api/locations/nearest?lat=${lat}&lng=${lng}&limit=12&unit=miles`);
+                    const response = await fetch(`/api/locations/nearest?lat=${lat}&lng=${lng}&limit=20`);
                     const data = await response.json();
 
                     this.hideLoading();
@@ -752,10 +662,11 @@
 
                     if (data.locations && data.locations.length > 0) {
                         this.displayResults(data.locations, locationName);
-                        this.hideStatus();
+                        this.updateMap(data.locations, lat, lng);
+                        this.showStatus(`Found ${data.locations.length} centers near ${locationName}`, 'info');
                     } else {
                         this.showNoResults();
-                        this.showStatus('No centers found near your location', 'info');
+                        this.showStatus('No centers found in your area', 'error');
                     }
 
                 } catch (error) {
@@ -765,78 +676,91 @@
             }
 
             displayResults(locations, locationName) {
-                this.resultsTitle.textContent = `EESystem™ Centers Near You`;
-                this.resultsSubtitle.textContent = `Found ${locations.length} centers near ${locationName}`;
-                
-                this.locationsList.innerHTML = '';
+                this.resultsList.innerHTML = '';
 
                 locations.forEach((location, index) => {
-                    const card = this.createLocationCard(location, index + 1);
-                    this.locationsList.appendChild(card);
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    
+                    const distance = location.distance ? location.distance.toFixed(1) : 'N/A';
+                    const unit = location.unit || 'miles';
+
+                    item.innerHTML = `
+                        <div class="result-name">${this.escapeHtml(location.name)}</div>
+                        <div class="result-address">${this.escapeHtml(location.address)}</div>
+                        <div class="result-distance">${distance} ${unit} away</div>
+                        <div class="result-actions">
+                            ${location.bookingUrl ? `
+                                <a href="${location.bookingUrl}" target="_blank" class="action-btn btn-book">Book Session</a>
+                            ` : ''}
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}" 
+                               target="_blank" class="action-btn btn-directions">Directions</a>
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        if (this.map) {
+                            this.map.flyTo({
+                                center: [location.longitude, location.latitude],
+                                zoom: 12
+                            });
+                        }
+                    });
+
+                    this.resultsList.appendChild(item);
                 });
-
-                this.resultsSection.style.display = 'block';
-                this.noResults.style.display = 'none';
-
-                // Smooth scroll to results
-                this.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
-            createLocationCard(location, rank) {
-                const card = document.createElement('div');
-                card.className = 'location-card';
+            updateMap(locations, userLat, userLng) {
+                if (!this.map) return;
 
-                const distance = location.distance ? location.distance.toFixed(1) : 'N/A';
-                const unit = location.unit || 'miles';
+                // Clear existing markers
+                this.markers.forEach(marker => marker.remove());
+                this.markers = [];
 
-                card.innerHTML = `
-                    <div class="location-card-header">
-                        <div class="location-name">${this.escapeHtml(location.name)}</div>
-                        ${location.distance ? `<div class="location-distance">${distance} ${unit}</div>` : ''}
-                    </div>
-                    <div class="location-card-body">
-                        <div class="location-address">
-                            ${this.escapeHtml(location.address)}
-                        </div>
-                        ${location.country ? `
-                            <div class="location-country">
-                                ${this.escapeHtml(location.country)}
-                            </div>
-                        ` : ''}
-                        
-                        <div class="location-actions">
-                            ${location.bookingUrl ? `
-                                <a href="${this.escapeHtml(location.bookingUrl)}" 
-                                   target="_blank" 
-                                   rel="noopener noreferrer" 
-                                   class="action-btn btn-book">
-                                    Book Session
-                                </a>
-                            ` : ''}
-                            
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}" 
-                               target="_blank" 
-                               rel="noopener noreferrer" 
-                               class="action-btn btn-directions">
-                                Get Directions
-                            </a>
-                        </div>
-                    </div>
-                `;
+                // Add user location marker
+                const userMarker = new mapboxgl.Marker({ color: '#667eea' })
+                    .setLngLat([userLng, userLat])
+                    .setPopup(new mapboxgl.Popup().setHTML('<strong>Your Location</strong>'))
+                    .addTo(this.map);
+                this.markers.push(userMarker);
 
-                return card;
+                // Add center markers
+                locations.forEach(location => {
+                    const marker = new mapboxgl.Marker({ color: '#e67e22' })
+                        .setLngLat([location.longitude, location.latitude])
+                        .setPopup(new mapboxgl.Popup().setHTML(`
+                            <div style="font-weight: bold; margin-bottom: 5px;">${location.name}</div>
+                            <div style="font-size: 12px; color: #666;">${location.address}</div>
+                            ${location.distance ? `<div style="font-size: 12px; color: #e67e22; margin-top: 5px;">${location.distance.toFixed(1)} miles away</div>` : ''}
+                        `))
+                        .addTo(this.map);
+                    this.markers.push(marker);
+                });
+
+                // Fit map to show all locations
+                if (locations.length > 0) {
+                    const bounds = new mapboxgl.LngLatBounds();
+                    bounds.extend([userLng, userLat]);
+                    locations.forEach(location => {
+                        bounds.extend([location.longitude, location.latitude]);
+                    });
+                    this.map.fitBounds(bounds, { padding: 50 });
+                }
             }
 
             showNoResults() {
-                this.resultsSection.style.display = 'block';
-                this.locationsList.innerHTML = '';
-                this.noResults.style.display = 'block';
-                this.resultsTitle.textContent = 'No Centers Found';
-                this.resultsSubtitle.textContent = '';
+                this.resultsList.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #666;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No Centers Found</div>
+                        <div>Try searching for a different location or check back later as new centers are added regularly.</div>
+                    </div>
+                `;
             }
 
             showLoading(message = 'Loading...') {
-                this.loading.querySelector('.loading-text').textContent = message;
+                this.loading.querySelector('p').textContent = message;
                 this.loading.style.display = 'block';
                 this.hideStatus();
             }
@@ -847,7 +771,7 @@
 
             showStatus(message, type = 'info') {
                 this.statusMessage.textContent = message;
-                this.statusMessage.className = `status-message ${type}`;
+                this.statusMessage.className = `status-message status-${type}`;
                 this.statusMessage.style.display = 'block';
             }
 
@@ -856,20 +780,15 @@
             }
 
             escapeHtml(text) {
-                const map = {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#039;'
-                };
-                return String(text || '').replace(/[&<>"']/g, m => map[m]);
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
         }
 
-        // Initialize the application when DOM is loaded
+        // Initialize the finder when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            new EESystemLocationFinder();
+            new EESystemFinder();
         });
     </script>
 </body>

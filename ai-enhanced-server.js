@@ -833,6 +833,76 @@ app.get('/api/locations', async (req, res) => {
   }
 });
 
+// IP-based geolocation endpoint
+app.get('/api/locations/ip-location', async (req, res) => {
+  try {
+    const clientIP = req.headers['x-forwarded-for'] || 
+                     req.headers['x-real-ip'] || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress ||
+                     (req.connection.socket ? req.connection.socket.remoteAddress : null);
+
+    // If localhost, use a default location (Las Vegas for testing)
+    if (!clientIP || clientIP === '127.0.0.1' || clientIP === '::1' || clientIP.includes('localhost')) {
+      console.log('Local development - using Las Vegas as default location');
+      return res.json({
+        success: true,
+        location: {
+          lat: 36.1699,
+          lng: -115.1398,
+          city: 'Las Vegas',
+          country: 'United States',
+          source: 'default'
+        }
+      });
+    }
+
+    // Use ip-api.com for IP geolocation (free, no API key required)
+    const response = await fetch(`http://ip-api.com/json/${clientIP}?fields=status,country,regionName,city,lat,lon`);
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      res.json({
+        success: true,
+        location: {
+          lat: data.lat,
+          lng: data.lon,
+          city: data.city,
+          region: data.regionName,
+          country: data.country,
+          source: 'ip'
+        }
+      });
+    } else {
+      // Fallback to default location
+      res.json({
+        success: true,
+        location: {
+          lat: 36.1699,
+          lng: -115.1398,
+          city: 'Las Vegas',
+          country: 'United States',
+          source: 'fallback'
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('IP geolocation error:', error);
+    // Fallback to default location on error
+    res.json({
+      success: true,
+      location: {
+        lat: 36.1699,
+        lng: -115.1398,
+        city: 'Las Vegas',
+        country: 'United States',
+        source: 'error_fallback'
+      }
+    });
+  }
+});
+
 // Serve sample CSV file
 app.get('/sample.csv', (req, res) => {
   const sampleCsv = `name,address,bookingUrl,lat,lng,country,googlemaps
