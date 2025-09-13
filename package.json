@@ -2,10 +2,10 @@
   "name": "ee-location-webapp",
   "version": "1.0.0",
   "description": "EESystem Location Finder HTML Generator",
-  "main": "ai-enhanced-server.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node ai-enhanced-server.js",
-    "dev": "node server.js",
+    "start": "node src/app.js",
+    "dev": "node src/app.js",
     "claude": "claude"
   },
   "dependencies": {

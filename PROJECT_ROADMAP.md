@@ -184,7 +184,7 @@ curl http://localhost:3001/api/status
 ## 📞 Support & Documentation
 
 **Key Files:**
-- `ai-enhanced-server.js` - Main server with all APIs
+- `src/app.js` - Main server with all APIs
 - `public/finder.html` - Location finder interface
 - `public/index.html` - Admin interface (to be enhanced)
 - `database.json` - Location database

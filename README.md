@@ -24,7 +24,7 @@ A sophisticated web application that processes CSV files containing EESystem cen
 
 2. **Start the Server**
    ```bash
-   node fast-server.js
+   node src/app.js
    ```
 
 3. **Open Web Interface**
@@ -72,15 +72,13 @@ The generated HTML includes:
 
 ## 🔧 Configuration
 
-- Modify geocoding settings in `fast-server.js`
+- Modify geocoding settings in `src/app.js`
 - Customize HTML template in the `generateOptimizedHTML` function
 - Adjust rate limiting and security settings as needed
 
 ## 📁 Files
 
-- `fast-server.js` - Main server with geocoding and AI features
-- `ai-server.js` - Advanced AI-powered version (alternative)
-- `server.js` - Basic server (original)
+- `src/app.js` - Application entry point
 - `public/ai-interface.html` - Web interface for uploading and managing
 - `template.html` - Base template for generated HTML
 - `locations_db.json` - Local database (created automatically)
