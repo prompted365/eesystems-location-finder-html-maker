@@ -94,6 +94,12 @@ The generated HTML includes:
 - Customize HTML template in the `generateOptimizedHTML` function
 - Adjust rate limiting and security settings as needed
 
+### Environment Variables
+
+- `NOMINATIM_UA` – User-Agent string (include contact email) for Nominatim requests
+- `NOMINATIM_EMAIL` – Contact email sent with Nominatim requests
+- `REDIS_URL` – Redis connection string for geocode caching (default `redis://localhost:6379`)
+
 ## 🔐 Admin Mode (Local Testing)
 
 The admin dashboards are disabled by default and not served in production. To enable them locally:
