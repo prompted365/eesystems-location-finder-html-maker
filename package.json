@@ -8,9 +8,9 @@
     "dev": "node src/app.js",
     "claude": "claude",
     "test": "npm run test:unit && npm run test:smoke && npm run test:e2e",
-    "test:unit": "NODE_ENV=test jest tests/unit --runInBand",
-    "test:smoke": "NODE_ENV=test jest tests/smoke --runInBand",
-    "test:e2e": "NODE_ENV=test jest tests/e2e --runInBand"
+    "test:unit": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/unit --runInBand",
+    "test:smoke": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/smoke --runInBand",
+    "test:e2e": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --runInBand"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.105",
