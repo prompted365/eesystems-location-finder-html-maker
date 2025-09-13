@@ -1042,50 +1042,113 @@ app.get('/api/locations/cities/:country', async (req, res) => {
              (locationCountry?.toLowerCase().includes('austalia') && country === 'Australia');
     });
 
-    // Extract city names from addresses
+    // Enhanced city extraction from addresses
     const cities = [...new Set(
       locations
         .map(location => {
           const address = location.address || '';
-          // Try to extract city from address (varies by format)
-          // For US: "City, STATE ZIP"
-          // For CA: "City, Province/Territory"
-          // For others: "City, Country" or custom formats
-          
           let cityName = '';
           
           if (country === 'United States') {
-            // Extract city before ", STATE" pattern
-            const match = address.match(/([^,]+),\s*[A-Z]{2}(\s|,)/);
-            if (match) {
-              cityName = match[1].trim();
+            // US format: "Street Address, City, STATE ZIP"
+            // Examples: "3575 Maple Ave, Zanesville, OH 43701, USA"
+            //          "16775 Addison Rd. #325 Addison, TX 75001"
+            const parts = address.split(',').map(p => p.trim());
+            
+            if (parts.length >= 3) {
+              // Look for the part before STATE (2-letter code)
+              for (let i = 1; i < parts.length - 1; i++) {
+                const nextPart = parts[i + 1];
+                // Check if next part starts with 2-letter state code
+                if (nextPart && nextPart.match(/^\s*[A-Z]{2}(\s+\d|$)/)) {
+                  cityName = parts[i];
+                  break;
+                }
+              }
+              
+              // Fallback: if no state pattern found, use second part (most common)
+              if (!cityName && parts.length >= 2) {
+                cityName = parts[1];
+              }
+            } else if (parts.length === 2) {
+              // Simple format: "Street, City STATE ZIP"
+              const secondPart = parts[1];
+              // Extract city before state
+              const match = secondPart.match(/^(.+?)\s+[A-Z]{2}/);
+              if (match) {
+                cityName = match[1];
+              } else {
+                cityName = secondPart.split(/\s+/)[0]; // First word
+              }
             }
           } else if (country === 'Canada') {
-            // Extract city before ", Province" pattern
-            const match = address.match(/([^,]+),\s*[A-Z]{2}(\s|,)/);
-            if (match) {
-              cityName = match[1].trim();
+            // Canadian format: "Street, City, Province/Territory"
+            const parts = address.split(',').map(p => p.trim());
+            if (parts.length >= 3) {
+              // Look for part before province
+              for (let i = 1; i < parts.length - 1; i++) {
+                const nextPart = parts[i + 1];
+                // Check if next part looks like province
+                if (nextPart && nextPart.match(/^\s*(ON|BC|AB|SK|MB|QC|NB|NS|PE|NL|YT|NT|NU)/)) {
+                  cityName = parts[i];
+                  break;
+                }
+              }
+              // Fallback to second part
+              if (!cityName) {
+                cityName = parts[1];
+              }
             }
           } else {
-            // For other countries, take first part before comma
-            const parts = address.split(',');
-            if (parts.length > 1) {
-              cityName = parts[0].trim();
+            // For other countries, use smarter extraction
+            const parts = address.split(',').map(p => p.trim());
+            
+            if (country === 'Australia') {
+              // Australian format: "Street, City STATE POST"
+              if (parts.length >= 2) {
+                const secondPart = parts[1];
+                // Remove state and postcode
+                cityName = secondPart.replace(/\s+(VIC|NSW|QLD|WA|SA|TAS|ACT|NT)\s+\d+.*$/, '').trim();
+              }
+            } else if (country === 'United Kingdom') {
+              // UK format: "Street, City, POSTCODE"
+              if (parts.length >= 2) {
+                cityName = parts[1];
+                // Clean postcode patterns
+                cityName = cityName.replace(/\s+[A-Z]{1,2}\d+\s*\d*[A-Z]{0,2}.*$/, '').trim();
+              }
+            } else {
+              // Generic: take second part if available, otherwise first
+              if (parts.length >= 2) {
+                cityName = parts[1];
+              } else if (parts.length === 1) {
+                // Single part - might be "City, Country" format
+                cityName = parts[0];
+              }
             }
           }
           
           // Clean up city name
           if (cityName) {
-            // Remove numbers and extra words
+            // Remove common address elements
             cityName = cityName.replace(/^\d+\s+/, ''); // Remove leading numbers
-            cityName = cityName.split(/\s+(St|Ave|Rd|Blvd|Dr|Ln|Way|Ct|Pl)/)[0]; // Remove street suffixes
-            return cityName.trim();
+            cityName = cityName.replace(/\s+(St|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Ln|Lane|Way|Ct|Court|Pl|Place|Suite|#)\s*\d*.*$/i, ''); // Remove street suffixes
+            cityName = cityName.replace(/\s+(USA|United States|UK|United Kingdom|Canada|Australia)$/i, ''); // Remove country names
+            cityName = cityName.replace(/,.*$/, ''); // Remove everything after comma
+            cityName = cityName.trim();
+            
+            // Validate city name
+            if (cityName.length > 1 && !cityName.match(/^\d+$/) && !cityName.match(/^(suite|unit|#|\d)/i)) {
+              return cityName;
+            }
           }
           
           return null;
         })
-        .filter(city => city && city.length > 2 && !city.match(/^\d/)) // Filter valid city names
+        .filter(city => city && city.length > 2) // Filter valid city names
     )].sort();
+
+    console.log(`🏙️ Extracted ${cities.length} cities for ${country}:`, cities.slice(0, 10));
 
     res.json({
       success: true,
@@ -1158,6 +1221,182 @@ app.get('/api/locations/by-location', async (req, res) => {
     console.error('Error getting locations by filter:', error);
     res.status(500).json({ error: 'Failed to get locations' });
   }
+});
+
+// Make.com Webhook Integration
+app.post('/webhook/make-com', async (req, res) => {
+  try {
+    console.log('📡 Make.com webhook received:', JSON.stringify(req.body, null, 2));
+    
+    const webhookData = req.body;
+    
+    // Validate webhook data structure
+    if (!webhookData || typeof webhookData !== 'object') {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid webhook data format' 
+      });
+    }
+    
+    // Handle different types of updates
+    if (Array.isArray(webhookData)) {
+      // Batch update - array of locations
+      const results = await processBatchUpdate(webhookData);
+      res.json({
+        success: true,
+        message: 'Batch update processed successfully',
+        processed: results.processed,
+        errors: results.errors,
+        timestamp: new Date().toISOString()
+      });
+    } else if (webhookData.name || webhookData.address) {
+      // Single location update
+      const result = await processSingleLocationUpdate(webhookData);
+      res.json({
+        success: true,
+        message: 'Location update processed successfully',
+        location: result.location,
+        action: result.action,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Unknown format
+      res.status(400).json({
+        success: false,
+        error: 'Unrecognized webhook data structure',
+        receivedFields: Object.keys(webhookData)
+      });
+    }
+    
+  } catch (error) {
+    console.error('❌ Make.com webhook error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Webhook processing failed',
+      message: error.message
+    });
+  }
+});
+
+// Process single location update from Make.com
+async function processSingleLocationUpdate(locationData) {
+  const db = await loadDatabase();
+  
+  // Clean and validate the incoming data
+  const cleanData = {
+    name: sanitizeString(locationData.name || '').trim(),
+    address: sanitizeString(locationData.address || '').trim(),
+    bookingUrl: locationData.bookingUrl ? ensureHttps(locationData.bookingUrl.trim()) : '',
+    lat: parseFloat(locationData.lat) || null,
+    lng: parseFloat(locationData.lng) || null,
+    country: sanitizeString(locationData.country || '').trim(),
+    googlemaps: locationData.googlemaps ? locationData.googlemaps.trim() : ''
+  };
+  
+  // Validate required fields
+  if (!cleanData.name || !cleanData.address) {
+    throw new Error('Missing required fields: name and address');
+  }
+  
+  // Check if location already exists
+  const existingLocation = db.locations.find(loc => 
+    loc.name.toLowerCase().trim() === cleanData.name.toLowerCase().trim()
+  );
+  
+  let action = '';
+  
+  if (existingLocation) {
+    // Update existing location
+    existingLocation.address = cleanData.address;
+    existingLocation.cleanAddress = cleanData.address;
+    existingLocation.latitude = cleanData.lat ? cleanData.lat.toString() : existingLocation.latitude;
+    existingLocation.longitude = cleanData.lng ? cleanData.lng.toString() : existingLocation.longitude;
+    existingLocation.bookingUrl = cleanData.bookingUrl || existingLocation.bookingUrl;
+    existingLocation.country = cleanData.country || existingLocation.country;
+    existingLocation.googleMapsLink = cleanData.googlemaps || existingLocation.googleMapsLink;
+    existingLocation.processed = new Date().toISOString();
+    
+    action = 'updated';
+    console.log(`✅ Updated location: ${cleanData.name}`);
+  } else {
+    // Create new location
+    const newLocation = {
+      id: `${cleanData.name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: cleanData.name,
+      address: cleanData.address,
+      cleanAddress: cleanData.address,
+      originalAddress: cleanData.address,
+      latitude: cleanData.lat ? cleanData.lat.toString() : null,
+      longitude: cleanData.lng ? cleanData.lng.toString() : null,
+      bookingUrl: cleanData.bookingUrl,
+      googleMapsLink: cleanData.googlemaps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanData.address)}`,
+      dataQuality: 'excellent',
+      issues: [],
+      processed: new Date().toISOString(),
+      country: cleanData.country,
+      source: 'make.com'
+    };
+    
+    db.locations.push(newLocation);
+    action = 'created';
+    console.log(`✅ Created new location: ${cleanData.name}`);
+  }
+  
+  // Save updated database
+  await saveDatabase(db);
+  
+  return {
+    location: cleanData,
+    action: action
+  };
+}
+
+// Process batch update from Make.com
+async function processBatchUpdate(locationsArray) {
+  const results = {
+    processed: 0,
+    errors: []
+  };
+  
+  for (const locationData of locationsArray) {
+    try {
+      await processSingleLocationUpdate(locationData);
+      results.processed++;
+    } catch (error) {
+      results.errors.push({
+        location: locationData.name || 'Unknown',
+        error: error.message
+      });
+      console.error(`❌ Failed to process location: ${locationData.name}`, error.message);
+    }
+  }
+  
+  return results;
+}
+
+// Test endpoint for webhook (for development/testing)
+app.get('/webhook/make-com/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Make.com webhook endpoint is working',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      webhook: '/webhook/make-com',
+      method: 'POST',
+      expectedData: {
+        single: {
+          name: 'Center Name',
+          address: 'Full Address',
+          bookingUrl: 'https://...',
+          lat: 'Latitude',
+          lng: 'Longitude', 
+          country: 'Country Name',
+          googlemaps: 'Google Maps Link (optional)'
+        },
+        batch: '[array of location objects]'
+      }
+    }
+  });
 });
 
 // Serve sample CSV file

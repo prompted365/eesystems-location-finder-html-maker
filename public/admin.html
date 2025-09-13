@@ -346,6 +346,70 @@
             </div>
         </div>
 
+        <!-- CSV Upload Section -->
+        <div class="dashboard-card full-width">
+            <div class="card-header">
+                <div class="card-icon">📤</div>
+                <div>
+                    <h3 class="card-title">CSV Upload & Database Management</h3>
+                </div>
+            </div>
+            <p class="card-description">Upload CSV files to add/update locations in the database</p>
+            
+            <form id="csvUploadForm" enctype="multipart/form-data">
+                <div class="input-group">
+                    <label class="input-label" for="csvFileInput">Select CSV File:</label>
+                    <input type="file" id="csvFileInput" name="csvFile" accept=".csv" class="form-input" required>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center; margin-top: 16px;">
+                    <button type="submit" class="btn btn-primary">
+                        📤 Upload & Process CSV
+                    </button>
+                    <a href="/sample.csv" class="btn btn-secondary" download>
+                        📋 Download Sample CSV
+                    </a>
+                    <span id="uploadStatus" style="color: #6b7280; font-size: 0.9rem;"></span>
+                </div>
+            </form>
+            
+            <div id="uploadResults" class="test-results" style="display: none;">
+                <h4>Upload Results:</h4>
+                <div id="uploadResultsContent"></div>
+            </div>
+        </div>
+
+        <!-- Location Management Section -->
+        <div class="dashboard-card full-width">
+            <div class="card-header">
+                <div class="card-icon">🗺️</div>
+                <div>
+                    <h3 class="card-title">Location Management</h3>
+                </div>
+            </div>
+            <p class="card-description">Manage all locations with country/city correction and coordinate validation</p>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="loadAllLocations()">
+                    📋 Load All Locations
+                </button>
+                <select id="countryFilter" class="form-select" onchange="filterByCountry()">
+                    <option value="">All Countries</option>
+                </select>
+                <button class="btn btn-secondary" onclick="bulkFixCountries()">
+                    🔧 Fix Country Names
+                </button>
+                <button class="btn btn-secondary" onclick="validateAllCoordinates()">
+                    📍 Validate Coordinates
+                </button>
+            </div>
+            
+            <div id="locationCardsContainer" style="display: none;">
+                <div class="locations-grid" id="locationsGrid">
+                    <!-- Location cards will be inserted here -->
+                </div>
+            </div>
+        </div>
+
         <!-- Dashboard Grid -->
         <div class="dashboard-grid">
             
@@ -946,6 +1010,332 @@ Ready for testing... Select any test above to begin.
         document.addEventListener('DOMContentLoaded', () => {
             window.adminDashboard = new EESystemAdminDashboard();
         });
+
+        // CSV Upload Functionality
+        document.getElementById('csvUploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('csvFileInput');
+            const statusElement = document.getElementById('uploadStatus');
+            const resultsDiv = document.getElementById('uploadResults');
+            const resultsContent = document.getElementById('uploadResultsContent');
+            
+            if (!fileInput.files[0]) {
+                window.adminDashboard.showStatus('Please select a CSV file', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('csvFile', fileInput.files[0]);
+            
+            statusElement.textContent = 'Uploading and processing...';
+            window.adminDashboard.log(`📤 Uploading CSV file: ${fileInput.files[0].name}`);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusElement.textContent = `✅ Success! Processed ${result.locationCount} locations`;
+                    
+                    // Show detailed results
+                    resultsContent.innerHTML = `
+                        <div class="result-item">
+                            <span class="result-label">Total Processed</span>
+                            <span class="result-value">${result.analysis.totalProcessed}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">New Locations</span>
+                            <span class="result-status status-pass">${result.analysis.new}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Updated Locations</span>
+                            <span class="result-status status-warning">${result.analysis.updated}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Unchanged</span>
+                            <span class="result-value">${result.analysis.unchanged}</span>
+                        </div>
+                    `;
+                    resultsDiv.style.display = 'block';
+                    
+                    window.adminDashboard.log(`✅ CSV upload successful: ${result.analysis.new} new, ${result.analysis.updated} updated`);
+                    window.adminDashboard.showStatus('CSV upload completed successfully!', 'success');
+                    
+                    // Clear the file input
+                    fileInput.value = '';
+                    
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+                
+            } catch (error) {
+                statusElement.textContent = '❌ Upload failed';
+                window.adminDashboard.log(`❌ CSV upload failed: ${error.message}`);
+                window.adminDashboard.showStatus(`Upload failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Location Management Functions
+        let allLocations = [];
+        let filteredLocations = [];
+
+        async function loadAllLocations() {
+            window.adminDashboard.log('📋 Loading all locations for management...');
+            
+            try {
+                const response = await fetch('/api/locations');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allLocations = data.locations;
+                    filteredLocations = [...allLocations];
+                    
+                    // Populate country filter
+                    const countries = [...new Set(allLocations.map(loc => loc.country).filter(c => c))];
+                    const countryFilter = document.getElementById('countryFilter');
+                    countryFilter.innerHTML = '<option value="">All Countries</option>';
+                    countries.forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country;
+                        option.textContent = country;
+                        countryFilter.appendChild(option);
+                    });
+                    
+                    displayLocationCards();
+                    window.adminDashboard.log(`✅ Loaded ${allLocations.length} locations`);
+                    window.adminDashboard.showStatus(`Loaded ${allLocations.length} locations`, 'success');
+                    
+                } else {
+                    throw new Error('Failed to load locations');
+                }
+                
+            } catch (error) {
+                window.adminDashboard.log(`❌ Failed to load locations: ${error.message}`);
+                window.adminDashboard.showStatus('Failed to load locations', 'error');
+            }
+        }
+
+        function filterByCountry() {
+            const selectedCountry = document.getElementById('countryFilter').value;
+            
+            if (selectedCountry) {
+                filteredLocations = allLocations.filter(loc => loc.country === selectedCountry);
+                window.adminDashboard.log(`🔍 Filtered to ${filteredLocations.length} locations in ${selectedCountry}`);
+            } else {
+                filteredLocations = [...allLocations];
+                window.adminDashboard.log('🔍 Showing all locations');
+            }
+            
+            displayLocationCards();
+        }
+
+        function displayLocationCards() {
+            const container = document.getElementById('locationCardsContainer');
+            const grid = document.getElementById('locationsGrid');
+            
+            if (filteredLocations.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            grid.innerHTML = '';
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(350px, 1fr))';
+            grid.style.gap = '20px';
+            grid.style.marginTop = '20px';
+            
+            filteredLocations.forEach(location => {
+                const card = createLocationCard(location);
+                grid.appendChild(card);
+            });
+            
+            container.style.display = 'block';
+        }
+
+        function createLocationCard(location) {
+            const card = document.createElement('div');
+            card.className = 'dashboard-card';
+            card.style.margin = '0';
+            card.style.padding = '20px';
+            
+            const hasIssues = !location.latitude || !location.longitude || !location.country;
+            const issueClass = hasIssues ? 'status-fail' : 'status-pass';
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <h4 style="margin: 0; color: #2d3748; font-size: 1.1rem; font-weight: 600;">${location.name}</h4>
+                    <span class="result-status ${issueClass}" style="font-size: 0.7rem;">
+                        ${hasIssues ? 'NEEDS FIX' : 'OK'}
+                    </span>
+                </div>
+                
+                <div style="font-size: 0.9rem; color: #4a5568; margin-bottom: 12px;">
+                    <strong>Address:</strong> ${location.address || 'N/A'}
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: 0.85rem;">
+                    <div>
+                        <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">Country:</label>
+                        <input type="text" value="${location.country || ''}" 
+                               onchange="updateLocationField('${location.id}', 'country', this.value)"
+                               style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px;">
+                    </div>
+                    <div>
+                        <label style="font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">Coordinates:</label>
+                        <div style="display: flex; gap: 4px;">
+                            <input type="number" step="any" value="${location.latitude || ''}" placeholder="Lat"
+                                   onchange="updateLocationField('${location.id}', 'latitude', this.value)"
+                                   style="width: 50%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.8rem;">
+                            <input type="number" step="any" value="${location.longitude || ''}" placeholder="Lng"
+                                   onchange="updateLocationField('${location.id}', 'longitude', this.value)"
+                                   style="width: 50%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.8rem;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button onclick="geocodeLocation('${location.id}')" 
+                            class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">
+                        🌍 Geocode
+                    </button>
+                    <button onclick="validateLocation('${location.id}')" 
+                            class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">
+                        ✓ Validate
+                    </button>
+                    ${location.bookingUrl ? `
+                        <a href="${location.bookingUrl}" target="_blank" 
+                           class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; text-decoration: none;">
+                            🔗 Booking
+                        </a>
+                    ` : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function updateLocationField(locationId, field, value) {
+            // Find the location in our array and update it
+            const locationIndex = allLocations.findIndex(loc => loc.id === locationId);
+            if (locationIndex !== -1) {
+                allLocations[locationIndex][field] = value;
+                
+                // Also update filtered locations if it exists there
+                const filteredIndex = filteredLocations.findIndex(loc => loc.id === locationId);
+                if (filteredIndex !== -1) {
+                    filteredLocations[filteredIndex][field] = value;
+                }
+                
+                window.adminDashboard.log(`📝 Updated ${field} for "${allLocations[locationIndex].name}": ${value}`);
+            }
+        }
+
+        async function geocodeLocation(locationId) {
+            const location = allLocations.find(loc => loc.id === locationId);
+            if (!location) return;
+            
+            window.adminDashboard.log(`🌍 Geocoding "${location.name}"...`);
+            
+            try {
+                const response = await fetch('/api/locations/geocode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: location.address })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update the location coordinates
+                    updateLocationField(locationId, 'latitude', data.coordinates.lat);
+                    updateLocationField(locationId, 'longitude', data.coordinates.lng);
+                    
+                    // Refresh the display
+                    displayLocationCards();
+                    
+                    window.adminDashboard.log(`✅ Geocoded "${location.name}": ${data.coordinates.lat}, ${data.coordinates.lng}`);
+                    window.adminDashboard.showStatus(`Geocoded ${location.name}`, 'success');
+                } else {
+                    throw new Error(data.error || 'Geocoding failed');
+                }
+                
+            } catch (error) {
+                window.adminDashboard.log(`❌ Geocoding failed for "${location.name}": ${error.message}`);
+                window.adminDashboard.showStatus(`Geocoding failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function validateLocation(locationId) {
+            const location = allLocations.find(loc => loc.id === locationId);
+            if (!location) return;
+            
+            const issues = [];
+            if (!location.latitude || !location.longitude) issues.push('Missing coordinates');
+            if (!location.country) issues.push('Missing country');
+            if (!location.bookingUrl) issues.push('Missing booking URL');
+            
+            if (issues.length === 0) {
+                window.adminDashboard.showStatus(`${location.name} is valid`, 'success');
+                window.adminDashboard.log(`✅ "${location.name}" validation passed`);
+            } else {
+                window.adminDashboard.showStatus(`${location.name} has issues: ${issues.join(', ')}`, 'error');
+                window.adminDashboard.log(`❌ "${location.name}" validation failed: ${issues.join(', ')}`);
+            }
+        }
+
+        async function bulkFixCountries() {
+            window.adminDashboard.log('🔧 Running bulk country fixes...');
+            
+            let fixCount = 0;
+            allLocations.forEach(location => {
+                if (location.country && location.country.toLowerCase().includes('austalia')) {
+                    updateLocationField(location.id, 'country', 'Australia');
+                    fixCount++;
+                }
+            });
+            
+            if (fixCount > 0) {
+                displayLocationCards();
+                window.adminDashboard.log(`✅ Fixed ${fixCount} country name issues`);
+                window.adminDashboard.showStatus(`Fixed ${fixCount} country names`, 'success');
+            } else {
+                window.adminDashboard.log('ℹ️ No country name issues found');
+                window.adminDashboard.showStatus('No country issues found', 'info');
+            }
+        }
+
+        async function validateAllCoordinates() {
+            window.adminDashboard.log('📍 Validating all coordinates...');
+            
+            let missingCount = 0;
+            let invalidCount = 0;
+            
+            allLocations.forEach(location => {
+                if (!location.latitude || !location.longitude) {
+                    missingCount++;
+                } else {
+                    const lat = parseFloat(location.latitude);
+                    const lng = parseFloat(location.longitude);
+                    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                        invalidCount++;
+                    }
+                }
+            });
+            
+            const totalIssues = missingCount + invalidCount;
+            if (totalIssues === 0) {
+                window.adminDashboard.log('✅ All coordinates are valid');
+                window.adminDashboard.showStatus('All coordinates validated successfully', 'success');
+            } else {
+                window.adminDashboard.log(`❌ Coordinate issues found: ${missingCount} missing, ${invalidCount} invalid`);
+                window.adminDashboard.showStatus(`Found ${totalIssues} coordinate issues`, 'error');
+            }
+        }
     </script>
 </body>
 </html>
