@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Nearest EESystem Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .location-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn, .locate-btn {
+            padding: 1rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-btn:hover, .locate-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .locate-btn {
+            background: #10b981;
+            margin-top: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .locate-btn:hover {
+            background: #059669;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-header {
+            color: white;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .results-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .location-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .location-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .location-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .location-distance {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .location-address {
+            color: #6b7280;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .location-country {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .location-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .no-results {
+            text-align: center;
+            color: white;
+            padding: 3rem;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .search-section {
+                padding: 1.5rem;
+            }
+
+            .location-input {
+                flex-direction: column;
+            }
+
+            .search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .location-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                justify-content: center;
+            }
+        }
+
+        /* Iframe optimizations */
+        @media (max-width: 600px) {
+            body {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: auto;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 1rem;
+            }
+
+            .header {
+                margin-bottom: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🔍 Find Your Nearest EESystem Center</h1>
+            <p>Discover healing centers near you with instant location detection</p>
+        </header>
+
+        <section class="search-section">
+            <div class="location-input">
+                <input type="text" 
+                       class="search-input" 
+                       id="locationInput" 
+                       placeholder="Enter postcode, city, or address (e.g., M1 1AA, Manchester)">
+                <button class="search-btn" id="searchBtn">
+                    🔍 Search
+                </button>
+            </div>
+            <button class="locate-btn" id="locateBtn">
+                📍 Use My Current Location
+            </button>
+
+            <div class="status-message" id="statusMessage"></div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Finding centers near you...</p>
+            </div>
+        </section>
+
+        <section class="results-section" id="resultsSection">
+            <div class="results-header">
+                <h2 id="resultsTitle">Nearest EESystem Centers</h2>
+                <p id="resultsSubtitle"></p>
+            </div>
+            <div id="locationsList"></div>
+            <div class="no-results" id="noResults" style="display: none;">
+                <h3>😔 No Centers Found</h3>
+                <p>We couldn't find any EESystem centers near your location. Try searching for a different area or check back later as we're always adding new locations.</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        class EESystemLocationFinder {
+            constructor() {
+                this.userLocation = null;
+                this.initializeElements();
+                this.bindEvents();
+                this.tryAutoLocation();
+            }
+
+            initializeElements() {
+                this.locationInput = document.getElementById('locationInput');
+                this.searchBtn = document.getElementById('searchBtn');
+                this.locateBtn = document.getElementById('locateBtn');
+                this.statusMessage = document.getElementById('statusMessage');
+                this.loading = document.getElementById('loading');
+                this.resultsSection = document.getElementById('resultsSection');
+                this.resultsTitle = document.getElementById('resultsTitle');
+                this.resultsSubtitle = document.getElementById('resultsSubtitle');
+                this.locationsList = document.getElementById('locationsList');
+                this.noResults = document.getElementById('noResults');
+            }
+
+            bindEvents() {
+                this.searchBtn.addEventListener('click', () => this.handleSearch());
+                this.locateBtn.addEventListener('click', () => this.getCurrentLocation());
+                
+                this.locationInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handleSearch();
+                    }
+                });
+
+                this.locationInput.addEventListener('input', () => {
+                    if (this.statusMessage.style.display !== 'none') {
+                        this.hideStatus();
+                    }
+                });
+            }
+
+            async tryAutoLocation() {
+                // Try to get user's location automatically on page load
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            this.userLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            this.findNearestLocations(this.userLocation.lat, this.userLocation.lng);
+                        },
+                        () => {
+                            // Fallback to IP-based location detection
+                            this.getIPLocation();
+                        },
+                        { timeout: 5000 }
+                    );
+                } else {
+                    this.getIPLocation();
+                }
+            }
+
+            async getIPLocation() {
+                try {
+                    // Fallback IP geolocation service
+                    const response = await fetch('https://ipapi.co/json/');
+                    const data = await response.json();
+                    
+                    if (data.latitude && data.longitude) {
+                        this.userLocation = {
+                            lat: data.latitude,
+                            lng: data.longitude
+                        };
+                        this.findNearestLocations(data.latitude, data.longitude);
+                    }
+                } catch (error) {
+                    console.log('IP location detection failed:', error);
+                    this.showStatus('Enter your location above to find nearby centers', 'info');
+                }
+            }
+
+            getCurrentLocation() {
+                if (!navigator.geolocation) {
+                    this.showStatus('Geolocation is not supported by your browser', 'error');
+                    return;
+                }
+
+                this.showLoading('Getting your location...');
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        this.findNearestLocations(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        this.hideLoading();
+                        let message = 'Unable to get your location. ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                message += 'Please allow location access and try again.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message += 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                message += 'Location request timed out.';
+                                break;
+                        }
+                        this.showStatus(message, 'error');
+                    },
+                    { 
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000
+                    }
+                );
+            }
+
+            async handleSearch() {
+                const query = this.locationInput.value.trim();
+                if (!query) {
+                    this.showStatus('Please enter a location to search', 'error');
+                    return;
+                }
+
+                this.showLoading('Searching for your location...');
+
+                try {
+                    // First, geocode the input
+                    const geocodeResponse = await fetch('/api/locations/geocode', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ address: query })
+                    });
+
+                    const geocodeData = await geocodeResponse.json();
+
+                    if (!geocodeResponse.ok) {
+                        throw new Error(geocodeData.error || 'Location not found');
+                    }
+
+                    const { lat, lng } = geocodeData.coordinates;
+                    this.userLocation = { lat, lng };
+                    
+                    // Find nearest locations
+                    await this.findNearestLocations(lat, lng, geocodeData.coordinates.city);
+
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus(`Search failed: ${error.message}`, 'error');
+                }
+            }
+
+            async findNearestLocations(lat, lng, locationName = 'your location') {
+                try {
+                    this.showLoading('Finding nearest centers...');
+
+                    const response = await fetch(`/api/locations/nearest?lat=${lat}&lng=${lng}&limit=10&unit=miles`);
+                    const data = await response.json();
+
+                    this.hideLoading();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to find locations');
+                    }
+
+                    if (data.locations && data.locations.length > 0) {
+                        this.displayResults(data.locations, locationName);
+                        this.showStatus(`Found ${data.locations.length} centers near ${locationName}`, 'success');
+                    } else {
+                        this.showNoResults();
+                        this.showStatus('No centers found near your location', 'info');
+                    }
+
+                } catch (error) {
+                    this.hideLoading();
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                }
+            }
+
+            displayResults(locations, locationName) {
+                this.resultsTitle.textContent = `Nearest EESystem Centers`;
+                this.resultsSubtitle.textContent = `${locations.length} centers found near ${locationName}`;
+                
+                this.locationsList.innerHTML = '';
+
+                locations.forEach((location, index) => {
+                    const card = this.createLocationCard(location, index + 1);
+                    this.locationsList.appendChild(card);
+                });
+
+                this.resultsSection.style.display = 'block';
+                this.noResults.style.display = 'none';
+
+                // Smooth scroll to results
+                this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            createLocationCard(location, rank) {
+                const card = document.createElement('div');
+                card.className = 'location-card';
+
+                const distance = location.distance.toFixed(1);
+                const unit = location.unit || 'miles';
+
+                card.innerHTML = `
+                    <div class="location-header">
+                        <div>
+                            <div class="location-name">${this.escapeHtml(location.name)}</div>
+                            <div class="location-address">
+                                📍 ${this.escapeHtml(location.address)}
+                            </div>
+                            ${location.country ? `
+                                <div class="location-country">
+                                    🌍 ${this.escapeHtml(location.country)}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="location-distance">
+                            ${distance} ${unit}
+                        </div>
+                    </div>
+                    
+                    <div class="location-actions">
+                        ${location.bookingUrl ? `
+                            <a href="${this.escapeHtml(location.bookingUrl)}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="action-btn btn-primary">
+                                📅 Book Session
+                            </a>
+                        ` : ''}
+                        
+                        ${location.googleMapsLink ? `
+                            <a href="${this.escapeHtml(location.googleMapsLink)}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="action-btn btn-secondary">
+                                🗺️ View on Maps
+                            </a>
+                        ` : `
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.address)}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="action-btn btn-secondary">
+                                🗺️ View on Maps
+                            </a>
+                        `}
+                        
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="action-btn btn-secondary">
+                            🧭 Get Directions
+                        </a>
+                    </div>
+                `;
+
+                return card;
+            }
+
+            showNoResults() {
+                this.resultsSection.style.display = 'block';
+                this.locationsList.innerHTML = '';
+                this.noResults.style.display = 'block';
+                this.resultsTitle.textContent = 'No Centers Found';
+                this.resultsSubtitle.textContent = '';
+            }
+
+            showLoading(message = 'Loading...') {
+                this.loading.querySelector('p').textContent = message;
+                this.loading.style.display = 'block';
+                this.hideStatus();
+            }
+
+            hideLoading() {
+                this.loading.style.display = 'none';
+            }
+
+            showStatus(message, type = 'info') {
+                this.statusMessage.textContent = message;
+                this.statusMessage.className = `status-message ${type}`;
+                this.statusMessage.style.display = 'block';
+            }
+
+            hideStatus() {
+                this.statusMessage.style.display = 'none';
+            }
+
+            escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return String(text || '').replace(/[&<>"']/g, m => map[m]);
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new EESystemLocationFinder();
+        });
+    </script>
+</body>
+</html>

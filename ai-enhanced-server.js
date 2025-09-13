@@ -23,7 +23,23 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
+// Serve static files
 app.use(express.static('public'));
+
+// Redirect root to location finder
+app.get('/', (req, res) => {
+  res.redirect('/finder');
+});
+
+// Serve the location finder page
+app.get('/finder', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'finder.html'));
+});
+
+// Admin interface for CSV management
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 app.use(express.json());
 
 // Configure multer for file uploads
@@ -529,6 +545,235 @@ app.get('/api/status', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to get database status' });
+  }
+});
+
+// === LIVE LOCATION FINDER API ENDPOINTS ===
+
+// Calculate distance between two points using Haversine formula
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 3959; // Earth's radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in miles
+}
+
+// Find nearest locations
+app.get('/api/locations/nearest', async (req, res) => {
+  try {
+    const { lat, lng, limit = 5, unit = 'miles' } = req.query;
+    
+    if (!lat || !lng) {
+      return res.status(400).json({ error: 'Latitude and longitude are required' });
+    }
+
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    
+    if (isNaN(userLat) || isNaN(userLng)) {
+      return res.status(400).json({ error: 'Invalid coordinates' });
+    }
+
+    const db = await loadDatabase();
+    
+    // Calculate distances and sort
+    const locationsWithDistance = db.locations
+      .filter(loc => loc.latitude && loc.longitude)
+      .map(location => {
+        const locLat = parseFloat(location.latitude);
+        const locLng = parseFloat(location.longitude);
+        const distance = calculateDistance(userLat, userLng, locLat, locLng);
+        
+        return {
+          id: location.id,
+          name: location.name,
+          address: location.address,
+          bookingUrl: location.bookingUrl,
+          googleMapsLink: location.googleMapsLink,
+          latitude: locLat,
+          longitude: locLng,
+          country: location.country,
+          distance: unit === 'km' ? distance * 1.60934 : distance,
+          unit: unit
+        };
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, parseInt(limit));
+
+    res.json({
+      success: true,
+      userLocation: { lat: userLat, lng: userLng },
+      locations: locationsWithDistance,
+      total: locationsWithDistance.length
+    });
+
+  } catch (error) {
+    console.error('Error finding nearest locations:', error);
+    res.status(500).json({ error: 'Failed to find nearest locations' });
+  }
+});
+
+// Geocode address/postcode to coordinates
+app.post('/api/locations/geocode', async (req, res) => {
+  try {
+    const { address } = req.body;
+    
+    if (!address || !address.trim()) {
+      return res.status(400).json({ error: 'Address is required' });
+    }
+
+    // For now, we'll use a simple UK postcode pattern recognition
+    // In production, you'd integrate with a proper geocoding service
+    const ukPostcodePattern = /^[A-Z]{1,2}[0-9R][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
+    const query = address.trim();
+    
+    // Mock geocoding - replace with actual service like Google Geocoding API
+    let coordinates = null;
+    
+    if (ukPostcodePattern.test(query)) {
+      // Mock UK postcode geocoding
+      const mockUKCoordinates = {
+        'M1 1AA': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
+        'SW1A 1AA': { lat: 51.5014, lng: -0.1419, city: 'London', country: 'United Kingdom' },
+        'B1 1AA': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
+        'EH1 1AA': { lat: 55.9533, lng: -3.1883, city: 'Edinburgh', country: 'United Kingdom' },
+        'L1 1AA': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' }
+      };
+      
+      // Try exact match first, then approximate
+      const normalizedPostcode = query.toUpperCase().replace(/\s+/g, ' ');
+      coordinates = mockUKCoordinates[normalizedPostcode];
+      
+      if (!coordinates) {
+        // Generate approximate coordinates for UK postcodes
+        const firstPart = normalizedPostcode.split(' ')[0];
+        const baseCoords = {
+          'M': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
+          'L': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' },
+          'B': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
+          'SW': { lat: 51.5014, lng: -0.1419, city: 'London', country: 'United Kingdom' },
+          'SE': { lat: 51.4545, lng: -0.0759, city: 'London', country: 'United Kingdom' },
+          'E': { lat: 51.5287, lng: -0.0436, city: 'London', country: 'United Kingdom' },
+          'N': { lat: 51.5630, lng: -0.1063, city: 'London', country: 'United Kingdom' }
+        };
+        
+        const prefix = firstPart.substring(0, 2);
+        coordinates = baseCoords[prefix] || baseCoords[firstPart.charAt(0)];
+      }
+    } else {
+      // Mock city/address geocoding
+      const mockCityCoordinates = {
+        'manchester': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
+        'london': { lat: 51.5074, lng: -0.1278, city: 'London', country: 'United Kingdom' },
+        'birmingham': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
+        'liverpool': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' },
+        'leeds': { lat: 53.8008, lng: -1.5491, city: 'Leeds', country: 'United Kingdom' },
+        'new york': { lat: 40.7128, lng: -74.0060, city: 'New York', country: 'United States' },
+        'los angeles': { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', country: 'United States' },
+        'chicago': { lat: 41.8781, lng: -87.6298, city: 'Chicago', country: 'United States' }
+      };
+      
+      const normalizedQuery = query.toLowerCase();
+      coordinates = mockCityCoordinates[normalizedQuery];
+    }
+    
+    if (!coordinates) {
+      return res.status(404).json({ 
+        error: 'Location not found',
+        suggestion: 'Try a UK postcode (e.g., M1 1AA) or major city name'
+      });
+    }
+    
+    res.json({
+      success: true,
+      query: query,
+      coordinates: coordinates
+    });
+
+  } catch (error) {
+    console.error('Error geocoding address:', error);
+    res.status(500).json({ error: 'Failed to geocode address' });
+  }
+});
+
+// Search locations by name or address
+app.get('/api/locations/search', async (req, res) => {
+  try {
+    const { q, limit = 10 } = req.query;
+    
+    if (!q || !q.trim()) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const db = await loadDatabase();
+    const query = q.trim().toLowerCase();
+    
+    // Search in name, address, and country
+    const matchingLocations = db.locations
+      .filter(location => {
+        const name = (location.name || '').toLowerCase();
+        const address = (location.address || '').toLowerCase();
+        const country = (location.country || '').toLowerCase();
+        
+        return name.includes(query) || 
+               address.includes(query) || 
+               country.includes(query);
+      })
+      .slice(0, parseInt(limit))
+      .map(location => ({
+        id: location.id,
+        name: location.name,
+        address: location.address,
+        bookingUrl: location.bookingUrl,
+        googleMapsLink: location.googleMapsLink,
+        latitude: parseFloat(location.latitude),
+        longitude: parseFloat(location.longitude),
+        country: location.country
+      }));
+
+    res.json({
+      success: true,
+      query: q,
+      locations: matchingLocations,
+      total: matchingLocations.length
+    });
+
+  } catch (error) {
+    console.error('Error searching locations:', error);
+    res.status(500).json({ error: 'Failed to search locations' });
+  }
+});
+
+// Get all locations for the finder
+app.get('/api/locations', async (req, res) => {
+  try {
+    const db = await loadDatabase();
+    
+    const locations = db.locations.map(location => ({
+      id: location.id,
+      name: location.name,
+      address: location.address,
+      bookingUrl: location.bookingUrl,
+      googleMapsLink: location.googleMapsLink,
+      latitude: parseFloat(location.latitude),
+      longitude: parseFloat(location.longitude),
+      country: location.country
+    }));
+
+    res.json({
+      success: true,
+      locations: locations,
+      total: locations.length,
+      lastUpdated: db.lastUpdated
+    });
+
+  } catch (error) {
+    console.error('Error getting locations:', error);
+    res.status(500).json({ error: 'Failed to get locations' });
   }
 });
 
