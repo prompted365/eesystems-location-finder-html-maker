@@ -1,8 +1,31 @@
 const path = require('path');
 const express = require('express');
+const pino = require('pino');
+const pinoHttp = require('pino-http');
+const helmet = require('helmet');
+const cors = require('cors');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const isProd = process.env.NODE_ENV === 'production';
+const logger = pino({
+  level: isProd ? 'info' : 'debug'
+});
+
+app.use(pinoHttp({ logger }));
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: ['https://eesystem.com', 'https://*.eesystem.com'] }));
+app.use(compression());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100
+});
+app.use('/search', limiter);
+app.use('/geocode', limiter);
+app.use('/upload', limiter);
 
 const runtime = {
   dataStore: process.env.DATA_STORE || 'json',
@@ -28,7 +51,7 @@ try {
       store = require('../database.json');
   }
 } catch (err) {
-  console.warn(`Failed to load data store "${runtime.dataStore}": ${err.message}`);
+  logger.warn(`Failed to load data store "${runtime.dataStore}": ${err.message}`);
 }
 
 app.get('/status', (req, res) => {
@@ -37,7 +60,7 @@ app.get('/status', (req, res) => {
 
 if (enableAdmin) {
   if (!adminToken) {
-    console.warn('ENABLE_ADMIN is set but ADMIN_TOKEN is missing');
+    logger.warn('ENABLE_ADMIN is set but ADMIN_TOKEN is missing');
   }
   const adminAuth = (req, res, next) => {
     const token = req.query.token || req.headers['x-admin-token'];
@@ -58,18 +81,24 @@ if (enableAdmin) {
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.listen(port, async () => {
-  console.log(`EESystem Location app running at http://localhost:${port}`);
-  console.log(`DATA_STORE=${runtime.dataStore}`);
-  console.log(`MODE=${runtime.mode}`);
-  console.log(`GEOCODER=${runtime.geocoder}`);
-
-  if (store && typeof store.connect === 'function') {
-    try {
-      await store.connect();
-    } catch (err) {
-      console.error('Failed to connect data store:', err.message);
+if (require.main === module) {
+  app.listen(port, async () => {
+    if (!isProd) {
+      logger.info(`EESystem Location app running at http://localhost:${port}`);
+      logger.info(`DATA_STORE=${runtime.dataStore}`);
+      logger.info(`MODE=${runtime.mode}`);
+      logger.info(`GEOCODER=${runtime.geocoder}`);
     }
-  }
-});
+
+    if (store && typeof store.connect === 'function') {
+      try {
+        await store.connect();
+      } catch (err) {
+        logger.error('Failed to connect data store:', err.message);
+      }
+    }
+  });
+}
+
+module.exports = app;
 
