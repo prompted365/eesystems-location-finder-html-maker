@@ -7,6 +7,7 @@ const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const { validate, schemas } = require('./lib/validate');
+const geocode = require('./core/geocode');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,13 +20,14 @@ app.use(pinoHttp({ logger }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: ['https://eesystem.com', 'https://*.eesystem.com'] }));
 app.use(compression());
+app.use(express.json());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100
 });
 app.use('/search', limiter);
-app.use('/geocode', limiter);
+app.use('/api/locations/geocode', limiter);
 app.use('/upload', limiter);
 
 const runtime = {
@@ -119,6 +121,23 @@ app.get('/api/locations/by-location', validate(schemas.byLocation), (req, res) =
   }
   results = results.map(formatLocation);
   res.json({ ok: true, data: results, meta: { total: results.length, filters: { country, city } } });
+});
+
+app.post('/api/locations/geocode', async (req, res) => {
+  const { address } = req.body || {};
+  if (!address || !address.trim()) {
+    return res.status(400).json({ success: false, error: 'Address is required' });
+  }
+  try {
+    const coordinates = await geocode(address.trim());
+    if (!coordinates) {
+      return res.status(404).json({ success: false, error: 'Location not found' });
+    }
+    res.json({ success: true, query: address.trim(), coordinates });
+  } catch (err) {
+    logger.error('Geocoding failed', err);
+    res.status(500).json({ success: false, error: 'Failed to geocode address' });
+  }
 });
 
 if (enableAdmin) {
