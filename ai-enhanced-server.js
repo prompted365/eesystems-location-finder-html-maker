@@ -617,6 +617,100 @@ app.get('/api/locations/nearest', async (req, res) => {
   }
 });
 
+// Global geocoding using OpenStreetMap Nominatim
+async function geocodeWithNominatim(address) {
+  try {
+    // OpenStreetMap Nominatim API (free, no API key required)
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`;
+    
+    const response = await fetch(nominatimUrl, {
+      headers: {
+        'User-Agent': 'EESystem-LocationFinder/1.0 (https://ee-system.com)'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Nominatim API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.length > 0) {
+      const result = data[0];
+      const addressComponents = result.address || {};
+      
+      return {
+        lat: parseFloat(result.lat),
+        lng: parseFloat(result.lon),
+        city: addressComponents.city || addressComponents.town || addressComponents.village || 
+              addressComponents.municipality || result.display_name.split(',')[0],
+        country: addressComponents.country || 'Unknown',
+        display_name: result.display_name
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Nominatim geocoding error:', error);
+    return null;
+  }
+}
+
+// Fallback geocoding for common locations (when Nominatim fails)
+function getFallbackCoordinates(query) {
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  // Common fallbacks for major cities worldwide
+  const fallbackCoordinates = {
+    // USA
+    'new york': { lat: 40.7128, lng: -74.0060, city: 'New York', country: 'United States' },
+    'los angeles': { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', country: 'United States' },
+    'chicago': { lat: 41.8781, lng: -87.6298, city: 'Chicago', country: 'United States' },
+    'las vegas': { lat: 36.1699, lng: -115.1398, city: 'Las Vegas', country: 'United States' },
+    'phoenix': { lat: 33.4484, lng: -112.0740, city: 'Phoenix', country: 'United States' },
+    'houston': { lat: 29.7604, lng: -95.3698, city: 'Houston', country: 'United States' },
+    'dallas': { lat: 32.7767, lng: -96.7970, city: 'Dallas', country: 'United States' },
+    'miami': { lat: 25.7617, lng: -80.1918, city: 'Miami', country: 'United States' },
+    'atlanta': { lat: 33.7490, lng: -84.3880, city: 'Atlanta', country: 'United States' },
+    'seattle': { lat: 47.6062, lng: -122.3321, city: 'Seattle', country: 'United States' },
+    
+    // UK
+    'london': { lat: 51.5074, lng: -0.1278, city: 'London', country: 'United Kingdom' },
+    'manchester': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
+    'birmingham': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
+    'liverpool': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' },
+    'leeds': { lat: 53.8008, lng: -1.5491, city: 'Leeds', country: 'United Kingdom' },
+    
+    // International
+    'paris': { lat: 48.8566, lng: 2.3522, city: 'Paris', country: 'France' },
+    'sydney': { lat: -33.8688, lng: 151.2093, city: 'Sydney', country: 'Australia' },
+    'melbourne': { lat: -37.8136, lng: 144.9631, city: 'Melbourne', country: 'Australia' },
+    'toronto': { lat: 43.6532, lng: -79.3832, city: 'Toronto', country: 'Canada' },
+    'dublin': { lat: 53.3498, lng: -6.2603, city: 'Dublin', country: 'Ireland' },
+    'amsterdam': { lat: 52.3676, lng: 4.9041, city: 'Amsterdam', country: 'Netherlands' },
+    'berlin': { lat: 52.5200, lng: 13.4050, city: 'Berlin', country: 'Germany' },
+    'rome': { lat: 41.9028, lng: 12.4964, city: 'Rome', country: 'Italy' },
+    'madrid': { lat: 40.4168, lng: -3.7038, city: 'Madrid', country: 'Spain' }
+  };
+  
+  return fallbackCoordinates[normalizedQuery] || null;
+}
+
+// Rate limiter for Nominatim API (max 1 request per second)
+let lastNominatimRequest = 0;
+async function rateLimitedGeocode(address) {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastNominatimRequest;
+  
+  if (timeSinceLastRequest < 1000) {
+    // Wait to respect rate limit
+    await new Promise(resolve => setTimeout(resolve, 1000 - timeSinceLastRequest));
+  }
+  
+  lastNominatimRequest = Date.now();
+  return await geocodeWithNominatim(address);
+}
+
 // Geocode address/postcode to coordinates
 app.post('/api/locations/geocode', async (req, res) => {
   try {
@@ -626,77 +720,27 @@ app.post('/api/locations/geocode', async (req, res) => {
       return res.status(400).json({ error: 'Address is required' });
     }
 
-    // For now, we'll use a simple UK postcode pattern recognition
-    // In production, you'd integrate with a proper geocoding service
-    const ukPostcodePattern = /^[A-Z]{1,2}[0-9R][0-9A-Z]?\s?[0-9][A-Z]{2}$/i;
     const query = address.trim();
+    console.log(`🔍 Geocoding request: "${query}"`);
     
-    // Mock geocoding - replace with actual service like Google Geocoding API
-    let coordinates = null;
+    // Try OpenStreetMap Nominatim first (global coverage)
+    let coordinates = await rateLimitedGeocode(query);
     
-    if (ukPostcodePattern.test(query)) {
-      // Mock UK postcode geocoding
-      const mockUKCoordinates = {
-        'M1 1AA': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
-        'SW1A 1AA': { lat: 51.5014, lng: -0.1419, city: 'London', country: 'United Kingdom' },
-        'B1 1AA': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
-        'EH1 1AA': { lat: 55.9533, lng: -3.1883, city: 'Edinburgh', country: 'United Kingdom' },
-        'L1 1AA': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' }
-      };
-      
-      // Try exact match first, then approximate
-      const normalizedPostcode = query.toUpperCase().replace(/\s+/g, ' ');
-      coordinates = mockUKCoordinates[normalizedPostcode];
-      
-      if (!coordinates) {
-        // Generate approximate coordinates for UK postcodes
-        const firstPart = normalizedPostcode.split(' ')[0];
-        const baseCoords = {
-          'M': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
-          'L': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' },
-          'B': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
-          'SW': { lat: 51.5014, lng: -0.1419, city: 'London', country: 'United Kingdom' },
-          'SE': { lat: 51.4545, lng: -0.0759, city: 'London', country: 'United Kingdom' },
-          'E': { lat: 51.5287, lng: -0.0436, city: 'London', country: 'United Kingdom' },
-          'N': { lat: 51.5630, lng: -0.1063, city: 'London', country: 'United Kingdom' }
-        };
-        
-        const prefix = firstPart.substring(0, 2);
-        coordinates = baseCoords[prefix] || baseCoords[firstPart.charAt(0)];
+    // If Nominatim fails, try fallback for common locations
+    if (!coordinates) {
+      coordinates = getFallbackCoordinates(query);
+      if (coordinates) {
+        console.log(`✅ Using fallback coordinates for: ${query}`);
       }
     } else {
-      // Mock city/address geocoding - expanded with more cities
-      const mockCityCoordinates = {
-        'manchester': { lat: 53.4808, lng: -2.2426, city: 'Manchester', country: 'United Kingdom' },
-        'london': { lat: 51.5074, lng: -0.1278, city: 'London', country: 'United Kingdom' },
-        'birmingham': { lat: 52.4862, lng: -1.8904, city: 'Birmingham', country: 'United Kingdom' },
-        'liverpool': { lat: 53.4084, lng: -2.9916, city: 'Liverpool', country: 'United Kingdom' },
-        'leeds': { lat: 53.8008, lng: -1.5491, city: 'Leeds', country: 'United Kingdom' },
-        'new york': { lat: 40.7128, lng: -74.0060, city: 'New York', country: 'United States' },
-        'los angeles': { lat: 34.0522, lng: -118.2437, city: 'Los Angeles', country: 'United States' },
-        'chicago': { lat: 41.8781, lng: -87.6298, city: 'Chicago', country: 'United States' },
-        'las vegas': { lat: 36.1699, lng: -115.1398, city: 'Las Vegas', country: 'United States' },
-        'phoenix': { lat: 33.4484, lng: -112.0740, city: 'Phoenix', country: 'United States' },
-        'houston': { lat: 29.7604, lng: -95.3698, city: 'Houston', country: 'United States' },
-        'dallas': { lat: 32.7767, lng: -96.7970, city: 'Dallas', country: 'United States' },
-        'san francisco': { lat: 37.7749, lng: -122.4194, city: 'San Francisco', country: 'United States' },
-        'miami': { lat: 25.7617, lng: -80.1918, city: 'Miami', country: 'United States' },
-        'atlanta': { lat: 33.7490, lng: -84.3880, city: 'Atlanta', country: 'United States' },
-        'seattle': { lat: 47.6062, lng: -122.3321, city: 'Seattle', country: 'United States' },
-        'denver': { lat: 39.7392, lng: -104.9903, city: 'Denver', country: 'United States' },
-        'austin': { lat: 30.2672, lng: -97.7431, city: 'Austin', country: 'United States' },
-        'san diego': { lat: 32.7157, lng: -117.1611, city: 'San Diego', country: 'United States' },
-        'portland': { lat: 45.5152, lng: -122.6784, city: 'Portland', country: 'United States' }
-      };
-      
-      const normalizedQuery = query.toLowerCase();
-      coordinates = mockCityCoordinates[normalizedQuery];
+      console.log(`✅ Nominatim geocoding successful for: ${query}`);
     }
     
     if (!coordinates) {
+      console.log(`❌ Geocoding failed for: ${query}`);
       return res.status(404).json({ 
         error: 'Location not found',
-        suggestion: 'Try a UK postcode (e.g., M1 1AA) or major city name'
+        suggestion: 'Try searching for a city name, postal code, or address. Examples: "Paris", "10001", "M1 1AA"'
       });
     }
     
