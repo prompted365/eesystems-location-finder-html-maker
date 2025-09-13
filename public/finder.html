@@ -382,6 +382,11 @@
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.1);
             margin-bottom: 40px;
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
         }
 
         .results-header {
@@ -853,10 +858,6 @@
             </div>
         </div>
 
-        <!-- Toggle Advanced Search -->
-        <button id="toggleAdvanced" class="toggle-advanced">
-            ⚙️ Advanced Filters
-        </button>
     </div>
 
     <!-- Educational Content Section -->
@@ -948,12 +949,18 @@
         </div>
 
         <!-- Results Section -->
-        <div class="results-section">
+        <div id="resultsSection" class="results-section">
             <div class="results-header">
                 <h2 class="results-title" id="resultsTitle">EESystem Centers</h2>
                 <p class="results-subtitle" id="resultsSubtitle">Use search above to find centers near you</p>
+                
+                <!-- Advanced Filters Button in Results -->
+                <div style="text-align: center; margin-top: 15px;">
+                    <button id="toggleAdvanced" class="toggle-advanced" style="background: #667eea; color: white; border: 2px solid #667eea;">
+                        ⚙️ Advanced Filters
+                    </button>
+                </div>
             </div>
-
 
             <!-- Loading State -->
             <div id="loading" class="loading">
@@ -1399,6 +1406,9 @@
             }
 
             displayResults() {
+                // Show results section
+                this.showResultsSection();
+                
                 if (this.filteredLocations.length === 0) {
                     this.showEmptyResults();
                     this.showEducationalContent();
@@ -1422,6 +1432,17 @@
                 // Update iframe height after content changes
                 if (window.iframeManager) {
                     window.iframeManager.triggerUpdate();
+                }
+            }
+
+            showResultsSection() {
+                const resultsSection = document.getElementById('resultsSection');
+                if (resultsSection) {
+                    resultsSection.classList.add('show');
+                    // Trigger iframe height update
+                    if (window.iframeManager) {
+                        window.iframeManager.triggerUpdate();
+                    }
                 }
             }
 
@@ -1675,7 +1696,7 @@
             updateResultsHeader(title, subtitle, showHelpText = false) {
                 this.resultsTitle.textContent = title;
                 if (showHelpText) {
-                    this.resultsSubtitle.innerHTML = `${subtitle}<br><small style="color: #9ca3af; font-size: 0.9rem;">Does this seem wrong? Please use the search bar above or click advanced filters above</small>`;
+                    this.resultsSubtitle.innerHTML = `${subtitle}<br><small style="color: #9ca3af; font-size: 0.9rem;">Does this seem wrong? Please use the search bar above or click advanced filters below</small>`;
                 } else {
                     this.resultsSubtitle.textContent = subtitle;
                 }
