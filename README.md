@@ -69,6 +69,10 @@ npm run test:smoke
 npm run test:e2e
 ```
 
+## 📚 API Reference
+
+See [API_REFERENCE.md](docs/API_REFERENCE.md) for endpoint details and admin mode guidance.
+
 ## 📊 CSV Format
 
 Your CSV should include these columns:
