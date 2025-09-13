@@ -69,6 +69,16 @@ npm run test:smoke
 npm run test:e2e
 ```
 
+### Testing & Coverage
+
+Run the full suite with coverage enabled:
+
+```bash
+npm test -- --coverage
+```
+
+This generates a coverage report in the `coverage/` directory. To explore the HTML report, open `coverage/lcov-report/index.html` in your browser. Lines marked in red indicate untested code, while summary tables show percentage coverage for statements, branches, functions, and lines.
+
 ## 📚 API Reference
 
 See [API_REFERENCE.md](docs/API_REFERENCE.md) for endpoint details and admin mode guidance.
