@@ -38,6 +38,24 @@ A sophisticated web application that processes CSV files containing EESystem cen
    - Copy to clipboard or download the generated location finder
    - Deploy anywhere for fast, responsive location finding
 
+## 🧪 Testing & TDD
+
+This project uses a test-driven development workflow. Write failing tests first in the appropriate layer and then implement your feature.
+
+Run the full test suite:
+
+```bash
+npm test
+```
+
+Run individual layers:
+
+```bash
+npm run test:unit
+npm run test:smoke
+npm run test:e2e
+```
+
 ## 📊 CSV Format
 
 Your CSV should include these columns:
