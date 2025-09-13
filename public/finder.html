@@ -1037,44 +1037,51 @@
             updateHeight() {
                 if (!this.isInIframe) return;
 
-                // Get more accurate content height
-                const bodyHeight = document.body.scrollHeight;
-                const documentHeight = document.documentElement.scrollHeight;
-                const windowHeight = window.innerHeight;
-                
-                // Get height of actual visible content
+                // Get sections that are actually visible
                 const heroSection = document.querySelector('.hero-section');
                 const educationalContent = document.querySelector('.educational-content');
                 const resultsSection = document.querySelector('.results-section');
                 
-                let contentHeight = 0;
+                let totalHeight = 0;
                 
-                if (heroSection) contentHeight += heroSection.offsetHeight;
+                // Calculate only visible content height
+                if (heroSection) {
+                    const heroHeight = Math.min(heroSection.offsetHeight, 600); // Cap hero at 600px
+                    totalHeight += heroHeight;
+                    console.log(`Hero section height: ${heroHeight}px`);
+                }
+                
                 if (educationalContent && !educationalContent.classList.contains('hidden')) {
-                    contentHeight += educationalContent.offsetHeight;
+                    const eduHeight = Math.min(educationalContent.offsetHeight, 800); // Cap educational at 800px
+                    totalHeight += eduHeight;
+                    console.log(`Educational content height: ${eduHeight}px`);
                 }
+                
                 if (resultsSection && resultsSection.classList.contains('show')) {
-                    contentHeight += resultsSection.offsetHeight;
+                    const resultsHeight = Math.min(resultsSection.offsetHeight, 600); // Cap results at 600px
+                    totalHeight += resultsHeight;
+                    console.log(`Results section height: ${resultsHeight}px`);
                 }
                 
-                // Add some padding
-                contentHeight += 40;
+                // Add reasonable padding
+                totalHeight += 40;
                 
-                // Use content height or fallback to document height, with bounds
+                // Apply strict bounds for GHL iframe
                 const newHeight = Math.max(
-                    Math.min(contentHeight, bodyHeight, documentHeight), 
-                    500, // minimum
-                    Math.min(contentHeight + 100, 1500) // maximum with buffer
+                    Math.min(totalHeight, 900), // Absolute maximum 900px
+                    450 // Minimum 450px
                 );
                 
+                console.log(`📊 Height calculation: total=${totalHeight}px, final=${newHeight}px`);
+                
                 // Only update if height changed significantly (avoid infinite loops)
-                if (Math.abs(newHeight - this.lastHeight) > 20) {
+                if (Math.abs(newHeight - this.lastHeight) > 30) {
                     this.lastHeight = newHeight;
                     
                     // Send height to parent window (GHL funnel)
                     this.sendHeightToParent(newHeight);
                     
-                    console.log(`📏 Updated iframe height: ${newHeight}px (content: ${contentHeight}px)`);
+                    console.log(`📏 Updated iframe height: ${newHeight}px (was: ${this.lastHeight}px)`);
                 }
             }
 
