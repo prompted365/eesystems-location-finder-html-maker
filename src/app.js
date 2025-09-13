@@ -10,6 +10,9 @@ const runtime = {
   geocoder: process.env.GEOCODER || 'nominatim'
 };
 
+const enableAdmin = process.env.ENABLE_ADMIN === 'true';
+const adminToken = process.env.ADMIN_TOKEN;
+
 let store;
 try {
   switch (runtime.dataStore.toLowerCase()) {
@@ -31,6 +34,27 @@ try {
 app.get('/status', (req, res) => {
   res.json({ ok: true, runtime });
 });
+
+if (enableAdmin) {
+  if (!adminToken) {
+    console.warn('ENABLE_ADMIN is set but ADMIN_TOKEN is missing');
+  }
+  const adminAuth = (req, res, next) => {
+    const token = req.query.token || req.headers['x-admin-token'];
+    if (adminToken && token === adminToken) {
+      return next();
+    }
+    res.status(401).json({ error: 'Unauthorized' });
+  };
+
+  app.get('/admin', adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'deprecated', 'public', 'admin.html'));
+  });
+
+  app.get('/ai-interface', adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'deprecated', 'public', 'ai-interface.html'));
+  });
+}
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 

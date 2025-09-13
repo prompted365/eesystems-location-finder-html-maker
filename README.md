@@ -28,7 +28,7 @@ A sophisticated web application that processes CSV files containing EESystem cen
    ```
 
 3. **Open Web Interface**
-   Navigate to `http://localhost:3000/ai-interface.html`
+   Navigate to `http://localhost:3000/`
 
 4. **Upload Your CSV**
    - Upload CSV with columns: `name`, `address`, `bookingUrl`, `lat`, `lng`, `country`
@@ -76,10 +76,26 @@ The generated HTML includes:
 - Customize HTML template in the `generateOptimizedHTML` function
 - Adjust rate limiting and security settings as needed
 
+## 🔐 Admin Mode (Local Testing)
+
+The admin dashboards are disabled by default and not served in production. To enable them locally:
+
+1. Set the environment variables:
+   ```bash
+   ENABLE_ADMIN=true
+   ADMIN_TOKEN=your-secret-token
+   ```
+2. Start the server with these variables:
+   ```bash
+   ENABLE_ADMIN=true ADMIN_TOKEN=your-secret-token node src/app.js
+   ```
+3. Access the dashboards:
+   - `http://localhost:3000/admin?token=your-secret-token`
+   - `http://localhost:3000/ai-interface?token=your-secret-token`
+
 ## 📁 Files
 
 - `src/app.js` - Application entry point
-- `public/ai-interface.html` - Web interface for uploading and managing
 - `template.html` - Base template for generated HTML
 - `locations_db.json` - Local database (created automatically)
 
